@@ -1,0 +1,3 @@
+QP3002: 
+ - apntplid=<Group><CNTXID>(\d+)</CNTXID><QOSTPLID>119</QOSTPLID>
+ - imsino=<Group><IMSI>(\d+)</IMSI>

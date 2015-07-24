@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" debug="true">
+	<!-- <appender name="file_debug"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOGDIR}/SOAP.%d{yyyyMMdd}.${hlrcode}.${hlrport}</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>[%5p]%d{HH:mm:ss.SSS} - %m%n</pattern>
+		</encoder>
+	</appender>
+	
+	<root level="DEBUG">
+		<appender-ref ref="file_debug" />
+	</root>
+	
+	 -->
+	
+	
+	<appender name="FILE-THREAD" class="ch.qos.logback.classic.sift.SiftingAppender">
+		<discriminator>
+			<key>hlrterm</key>
+			<defaultValue>head0</defaultValue>
+		</discriminator>
+		<sift>
+			<appender name="file_debug"
+				class="ch.qos.logback.core.rolling.RollingFileAppender">
+				<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+					<fileNamePattern>${LOGDIR}/SOAP.%d{yyyyMMdd}.${hlrterm}</fileNamePattern>
+				</rollingPolicy>
+				<encoder>
+					<pattern>[%5p]%d{HH:mm:ss.SSS} -- %m%n</pattern>
+				</encoder>
+			</appender>
+		</sift>
+	</appender>
+	
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>
+				%-5level %logger{36} - %msg%n
+			</Pattern>
+		</layout>
+	</appender>
+	
+	<logger name="com.sitech.crmpd.inter.common" level="debug"
+		additivity="false">
+		<appender-ref ref="FILE-THREAD" />
+	</logger>
+	
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>

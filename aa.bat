@@ -1,0 +1,1 @@
+java -javaagent:agent.jar=port=7777,host=localhost,agentContext=/j4p -cp target/offon-soap-0.0.1-SNAPSHOT-jar-with-dependencies.jar com.sitech.crmpd.inter.client.jmx.Control
