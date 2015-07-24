@@ -50,9 +50,21 @@ public class HLRPort extends Thread{
 		} catch (FileNotFoundException e) {
 			return false;
 		}
-		Map m1 = (Map)m.get(String.format("%s.%s", hlrcode, hlrport));
-		if(m1 == null)
+		Object o = m.get(String.format("%s.%s", hlrcode, hlrport));
+		if(o == null)
 			return false;
+		if(o instanceof String){
+			//这里允许使用应用， 比如 hf1.2 的配置与 hf1.1 的相同， 则配置为：
+			// hf1.2: hf1.1
+			o = m.get(o);
+			if(o == null)
+				return false;
+		}
+		if(!(o instanceof Map)){
+			logger.error("can not load hlrport config {}.{}", hlrcode, hlrport);
+			return false;
+		}
+		Map m1 = (Map)o;
 //		Properties p = new Properties();
 		for(Object k: m1.keySet()){
 			Object v = m1.get(k);
@@ -60,6 +72,9 @@ public class HLRPort extends Thread{
 				continue;
 			p.setProperty(String.valueOf(k), String.valueOf(v));
 		}
+		
+		p.setProperty(Constants.HLRCODE, hlrcode);
+		p.setProperty(Constants.HLRPORT, hlrport);
 		return true;
 	}
 

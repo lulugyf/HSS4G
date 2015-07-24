@@ -164,6 +164,7 @@ public class ManagerComm {
 		}
 		close();
 		running = false;
+		logger.info("worker thread ended!!");
 	}
 
 }

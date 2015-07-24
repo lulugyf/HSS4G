@@ -67,7 +67,7 @@ public class Control implements ControlMBean{
 	
 	
 	
-	public static void main(String[] args) throws Exception {   
+	public static void main(String[] args) throws Exception {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         
         ObjectName helloName = new ObjectName("offon:name=PortControl");
