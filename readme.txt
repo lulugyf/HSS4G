@@ -1,11 +1,14 @@
 # HSS4G
 
-¿ª¹Ø»úSOAPÖ¸Áî¿Í»§¶Ë
+å¼€å…³æœºSOAPæŒ‡ä»¤å®¢æˆ·ç«¯
 
- 1. 20150723 Ö§³ÖÒÔ .yaml ¸ñÊ½ÅäÖÃÖ¸ÁîÎÄ¼ş£¬ Èç¹û orderPath ÊÇÒÔ.yaml ½áÎ²µÄÎÄ¼ş£¬ÔòÒÔyaml½âÎö£¬ 
+ 1. 20150723 æ”¯æŒä»¥ .yaml æ ¼å¼é…ç½®æŒ‡ä»¤æ–‡ä»¶ï¼Œ å¦‚æœ orderPath æ˜¯ä»¥.yaml ç»“å°¾çš„æ–‡ä»¶ï¼Œåˆ™ä»¥yamlè§£æï¼Œ 
 =====================================
- 			·ñÔòÈç¹ûÊÇÄ¿Â¼£¬ ÔòÈÔÈ»ÒÔÔ­ÓĞ·½Ê½´¦Àí
-    yaml ÎÄ¼ş¸ñÊ½ÈçÏÂ£¨header footer ±ØĞëÒªÓĞ£©£º
+  hss.cfg ä¹Ÿè½¬æ¢ä¸º hss.yaml, orderæŒ‡ä»¤æ–‡ä»¶ä¹Ÿæ”¹ä¸º.yaml
+  è½¬æ¢å¯ä»¥é€šè¿‡æœ¬ç›®å½•ä¸­çš„ 2yaml.py è„šæœ¬æ¥å¤„ç†
+
+ 			å¦åˆ™å¦‚æœæ˜¯ç›®å½•ï¼Œ åˆ™ä»ç„¶ä»¥åŸæœ‰æ–¹å¼å¤„ç†
+    yaml æ–‡ä»¶æ ¼å¼å¦‚ä¸‹ï¼ˆheader footer å¿…é¡»è¦æœ‰ï¼‰ï¼š
 header: |
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:hss="http://www.chinamobile.com/HSS/">
    <soapenv:Header>
@@ -45,16 +48,16 @@ OP8607: |
   
     
     
- 2. 20150723 Ö§³Ö²éÑ¯Ö¸ÁîºóÈ¡²éÑ¯½á¹ûÖĞµÄÄÚÈİ×÷Îª²ÎÊı´«µ½ÏÂÒ»ÌõÖ¸ÁîÖĞ
+ 2. 20150723 æ”¯æŒæŸ¥è¯¢æŒ‡ä»¤åå–æŸ¥è¯¢ç»“æœä¸­çš„å†…å®¹ä½œä¸ºå‚æ•°ä¼ åˆ°ä¸‹ä¸€æ¡æŒ‡ä»¤ä¸­
 =====================================
-      Õâ¸öÊµÏÖµÄÇ°ÌáÌõ¼şÊÇ manager µÄÖ¸Áî°´ºÅÂëËø¶¨ÒÔ¼°Ë³Ğò¿ØÖÆ»úÖÆ£¬ »ù±¾ÉÏ»á°ÑÍ¬Ò»ÌõÖ¸ÁîµÄ×ÓÖ¸Áî¸øÍ¬Ò»¸ö½Ó¿Ú³ÌĞò
-    **** Òò´ËÊ¹ÓÃÏŞÖÆÊÇÍ¬Ò»ÌõcommandµÄÏàÁÚÁ½ÌõorderÖ®¼ä
-   order´æ·ÅĞÎÊ½Èç¹ûÊÇ .yaml, Ôò²éÕÒ query_param µÄkeyÕÒµ½ÎÄ¼ş£¬ Èç¹ûÊÇÄ¿Â¼£¬ ÔòÔÚÄ¿Â¼ÖĞÕÒquery_param.yaml
-   ÎÄ¼ş¸ñÊ½ÈçÏÂ, ½âÎö²ÎÊıµÄÕıÔò±í´ïÊ½¿ÉÒÔÓĞ¶à¸ö£º
+      è¿™ä¸ªå®ç°çš„å‰ææ¡ä»¶æ˜¯ manager çš„æŒ‡ä»¤æŒ‰å·ç é”å®šä»¥åŠé¡ºåºæ§åˆ¶æœºåˆ¶ï¼Œ åŸºæœ¬ä¸Šä¼šæŠŠåŒä¸€æ¡æŒ‡ä»¤çš„å­æŒ‡ä»¤ç»™åŒä¸€ä¸ªæ¥å£ç¨‹åº
+    **** å› æ­¤ä½¿ç”¨é™åˆ¶æ˜¯åŒä¸€æ¡commandçš„ç›¸é‚»ä¸¤æ¡orderä¹‹é—´
+   orderå­˜æ”¾å½¢å¼å¦‚æœæ˜¯ .yaml, åˆ™æŸ¥æ‰¾ query_param çš„keyæ‰¾åˆ°æ–‡ä»¶ï¼Œ å¦‚æœæ˜¯ç›®å½•ï¼Œ åˆ™åœ¨ç›®å½•ä¸­æ‰¾query_param.yaml
+   æ–‡ä»¶æ ¼å¼å¦‚ä¸‹, è§£æå‚æ•°çš„æ­£åˆ™è¡¨è¾¾å¼å¯ä»¥æœ‰å¤šä¸ªï¼š
 QP3002: 
  - apntplid=<Group><CNTXID>(\d+)</CNTXID><QOSTPLID>119</QOSTPLID>
      
-     Á½ÌõÖ¸ÁîÅäÖÃÈçÏÂ:  ¹Ø±Õ blackberry µÄÖ¸Áî·Ö½â 300 -> 9101/3002
+     ä¸¤æ¡æŒ‡ä»¤é…ç½®å¦‚ä¸‹:  å…³é—­ blackberry çš„æŒ‡ä»¤åˆ†è§£ 300 -> 9101/3002
 OP9101: |
   <LST_SUB>
   <HLRSN>${HLRSN}</HLRSN>
@@ -74,12 +77,12 @@ OP3002: |
 3002|18483590060||||
 
 
- 3. °®Á¢ĞÅµÄipµØÖ·×ª»»£¨ Ç°Ì¨ËÍÀ´µÄÊÇhex¸ñÊ½£¬ĞèÒª×ª»»³É n.n.n.n ¸ñÊ½£©
+ 3. çˆ±ç«‹ä¿¡çš„ipåœ°å€è½¬æ¢ï¼ˆ å‰å°é€æ¥çš„æ˜¯hexæ ¼å¼ï¼Œéœ€è¦è½¬æ¢æˆ n.n.n.n æ ¼å¼ï¼‰
 =====================================
-   ÉèÖÃ²ÎÊı IPHEX_TO_INT: 3781~4011    £¨±íÊ¾ 3781 4011 ÕâÁ½¸öorderĞèÒª×ª»» ss_info2 ÖĞµÄhexÎªÊ®½øÖÆ£©
+   è®¾ç½®å‚æ•° IPHEX_TO_INT: 3781~4011    ï¼ˆè¡¨ç¤º 3781 4011 è¿™ä¸¤ä¸ªorderéœ€è¦è½¬æ¢ ss_info2 ä¸­çš„hexä¸ºåè¿›åˆ¶ï¼‰
  
    3781|18483590060|||a0a0a0a0|CDNONGHANG.SC
-Ö¸ÁîÅäÖÃÈçÏÂ£º
+æŒ‡ä»¤é…ç½®å¦‚ä¸‹ï¼š
 OP3781: |
   <hss:MOD_GPRS_CONTEXT>
   <hss:HLRSN>${HLRSN}</hss:HLRSN>
@@ -90,14 +93,43 @@ OP3781: |
   <hss:IPV4ADD>${ssInfo2}</hss:IPV4ADD>
   </hss:MOD_GPRS_CONTEXT>
     
- 4. apn ÓòÃûµ½Ä£°åidµÄ×ª»»£º
+ 4. apn åŸŸååˆ°æ¨¡æ¿idçš„è½¬æ¢ï¼š
 =====================================
-   ÅäÖÃ²ÎÊı APN_TPL_ID: ericsson.YA.APN.cfg  £¨.cfgÎÄ¼şÎ»ÓÚ ETCDIR Ä¿Â¼ÖĞ£¬ÓòÃûºöÂÔ´óĞ¡Ğ´)
-ÅäÖÃÎÄ¼ş¸ñÊ½ÈçÏÂ£º
+   é…ç½®å‚æ•° APN_TPL_ID: ericsson.YA.APN.cfg  ï¼ˆ.cfgæ–‡ä»¶ä½äº ETCDIR ç›®å½•ä¸­ï¼ŒåŸŸåå¿½ç•¥å¤§å°å†™)
+é…ç½®æ–‡ä»¶æ ¼å¼å¦‚ä¸‹ï¼š
 _orders=3781
-_paramIndex=3               ĞòºÅ£º phoneNo|imsi|ssInfo1|ssInfo2|ssInfo3  ¶ÔÓ¦ 1 | 2 | 3 | 4 | 5, ÕâÀïÖ»ÔÊĞíÊ¹ÓÃ 3 4 5
+_paramIndex=3               åºå·ï¼š phoneNo|imsi|ssInfo1|ssInfo2|ssInfo3  å¯¹åº” 1 | 2 | 3 | 4 | 5, è¿™é‡Œåªå…è®¸ä½¿ç”¨ 3 4 5
 abkrd.sc=1
 abncxys.sc=2
 bcsw.sc=3
 bzkrd.sc=4
 bznjxy.sc=5  
+
+
+5. æ‰‹å·¥æµ‹è¯•
+=====================================
+   åœ¨ç›®å½• gyf/lte/test ä¸­ï¼Œ ä¿®æ”¹ hss.yaml æ–‡ä»¶ï¼Œ æ ¼å¼ä¸ etc/hss.yaml ç›¸åŒï¼Œ å¯ä»¥åªä¿ç•™è¦æµ‹è¯•çš„éƒ¨åˆ†
+   å¯åŠ¨è„šæœ¬run1å†…å®¹å¦‚ä¸‹ï¼š
+JVM_OPTS="${JVM_OPTS} -Duser.language=Zh -Duser.region=CN"
+JVM_OPTS="${JVM_OPTS} -Ddefault.client.encoding=GBK"
+JVM_OPTS="${JVM_OPTS} -Dfile.encoding=GBK"
+JVM_OPTS="${JVM_OPTS} -Dhlrname=$1"
+j2se631/bin/java ${JVM_OPTS} -cp .:offon-soap-0.0.1-SNAPSHOT-jar-with-dependencies.jar com.sitech.crmpd.inter.client.jmx.HandCmd $@
+
+  è¿è¡Œ ./run1 ${hlrcode}.${hlrport}
+  
+6. åˆå¹¶è¿›ç¨‹çš„ç”Ÿäº§è¿è¡Œ
+======================================
+  å•ç‹¬å¯åŠ¨ä¸»è¿›ç¨‹
+ java -javaagent:agent.jar=port=7777,host=localhost,agentContext=/j4p -cp offon-soap-0.0.1-SNAPSHOT-jar-with-dependencies.jar com.sitech.crmpd.inter.client.jmx.Control
+ 
+ ç„¶åé€šè¿‡ jolokiaçš„ httpç«¯å£ 7777 å‘é€httpè¯·æ±‚æ¥æ“ä½œå·¥ä½œçº¿ç¨‹ï¼š
+ åˆ—å‡ºå·¥ä½œçº¿ç¨‹ï¼š
+ curl http://127.0.0.1:7777/j4p/exec/offon:name=PortControl/list
+ å¯åŠ¨å·¥ä½œçº¿ç¨‹ï¼š
+ curl http://127.0.0.1:7777/j4p/exec/offon:name=PortControl/start/haa/2
+ åœæ­¢å·¥ä½œçº¿ç¨‹ï¼š
+ curl http://127.0.0.1:7777/j4p/exec/offon:name=PortControl/stop/haa/2
+ 
+
+ 
