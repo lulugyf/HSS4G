@@ -209,6 +209,36 @@ public class HttpSoapCaller {
 		LOGGER.info("query_param {} loaded,  size: {}", path, queryparams.size());
 	}
 	
+	private long orderFileChangeTime = 0L; //这个如果>0, 则标识着需要自动检查指令文件是否更新， 更新后自动加载
+	                                 //自动加载的配置为增加属性 order_reloadable （值不检测）
+	private String orderPath;
+	private void orderReload(boolean init) throws IOException{
+		File yamlfile = new File(orderPath);
+		if(!init && !(orderFileChangeTime > 0 && yamlfile.lastModified() > orderFileChangeTime)){
+			return;
+		}
+		LOGGER.warn("loading order config:{}", orderPath);
+		Map m = (Map)new Yaml().load(new FileInputStream(yamlfile));
+		orderMap = new HashMap<String, Template>();
+		StringTemplateResourceLoader resourceLoader = new StringTemplateResourceLoader();
+		Configuration cfg = Configuration.defaultConfiguration();
+		GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
+		
+		String header = (String)m.get("header");
+		String footer = (String)m.get("footer");
+		for(Object o: m.keySet()){
+			String key = (String)o;
+			if(!key.startsWith("OP"))
+				continue;
+			String value = (String)m.get(key);
+			key = key.substring(2);
+			Template t = gt.getTemplate(header+value+footer);
+			orderMap.put(key, t);
+		}
+		if(m.containsKey("query_param"))
+			loadQueryParam((String)m.get("query_param"));
+	}
+	
 	private void init(Properties properties) throws IOException{
 		this.properties = properties;
 		String orderPath = properties.getProperty(Constants.ORDER_PATH);
@@ -220,26 +250,12 @@ public class HttpSoapCaller {
 		if(!orderFile.exists())
 			throw new IOException("orderPath not found");
 		if(orderFile.isFile() && orderPath.endsWith(".yaml")){ //loading order as a single yaml file, not a folder
-			Yaml y = new Yaml();
-			Map m = (Map)y.load(new FileInputStream(orderPath));
-			orderMap = new HashMap<String, Template>();
-			StringTemplateResourceLoader resourceLoader = new StringTemplateResourceLoader();
-			Configuration cfg = Configuration.defaultConfiguration();
-			GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
-			
-			String header = (String)m.get("header");
-			String footer = (String)m.get("footer");
-			for(Object o: m.keySet()){
-				String key = (String)o;
-				if(!key.startsWith("OP"))
-					continue;
-				String value = (String)m.get(key);
-				key = key.substring(2);
-				Template t = gt.getTemplate(header+value+footer);
-				orderMap.put(key, t);
+			this.orderPath = orderPath;
+			if("true".equalsIgnoreCase(properties.getProperty("order_reloadable"))){
+				this.orderFileChangeTime = new File(orderPath).lastModified();
+				LOGGER.info("---order is reloadable");
 			}
-			if(m.containsKey("query_param"))
-				loadQueryParam((String)m.get("query_param"));
+			orderReload(true);
 		}else if(orderFile.isDirectory()){ // orders in a folder as separated files
 			groupTemplate = new GroupTemplate(new FileResourceLoader(orderPath),
 				Configuration.defaultConfiguration());
@@ -348,10 +364,18 @@ public class HttpSoapCaller {
 
 	private String createData(CmdDataAck cmd) {
 		Template template = null;
-		if(orderMap != null)
+		if(orderMap != null){
+			if(orderFileChangeTime > 0L){
+				try {
+					orderReload(false); //检查order文件是否更新， 更新则自动重新加载
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 			template = orderMap.get(cmd.ordercode);
-		else
+		}else{
 			template = groupTemplate.getTemplate(cmd.ordercode);
+		}
 		if(template == null)
 			return null;
 		if(addProp != null)
