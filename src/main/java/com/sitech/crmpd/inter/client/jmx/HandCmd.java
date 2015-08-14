@@ -34,27 +34,6 @@ public class HandCmd {
 		System.exit(0);
 	}
 	
-	private static boolean readCfg(String etcdir, String hlrcode, String hlrport, Properties p){
-		Yaml y = new Yaml();
-		Map m = null;
-		try {
-			m = (Map)y.load(new FileInputStream(new File(etcdir, "hss.yaml")));
-		} catch (FileNotFoundException e) {
-			return false;
-		}
-		Map m1 = (Map)m.get(String.format("%s.%s", hlrcode, hlrport));
-		if(m1 == null)
-			return false;
-//		Properties p = new Properties();
-		for(Object k: m1.keySet()){
-			Object v = m1.get(k);
-			if(v == null)
-				continue;
-			p.setProperty(String.valueOf(k), String.valueOf(v));
-		}
-		return true;
-	}
-
 	/**
 	 * @param args
 	 *            -H${hlrcode} -N${hlrport}
@@ -70,12 +49,14 @@ public class HandCmd {
 		String etcdir = ".";
 		final Properties properties = new Properties();
 		String[] hlr = args[0].split("\\.");
-		if(!readCfg(etcdir, hlr[0], hlr[1], properties)){
+		
+		// 读取接口配置文件
+		if(!HLRPort.readCfg(etcdir, hlr[0], hlr[1], properties)){
 			System.out.println("readCfg failed");
 			return;
 		}
-//		properties.load(new FileInputStream(args[0]+".properties"));
-		
+		properties.store(System.out, "config---");
+		System.setProperty("hlrname", args[0]);
 
 		properties.setProperty("ETCDIR", etcdir);
 		final HttpSoapCaller caller = new HttpSoapCaller(properties);

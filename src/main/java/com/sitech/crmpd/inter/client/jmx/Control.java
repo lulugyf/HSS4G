@@ -1,5 +1,10 @@
 package com.sitech.crmpd.inter.client.jmx;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -24,6 +29,12 @@ curl http://127.0.0.1:7777/j4p/exec/offon:name=PortControl/stop/haa/2
  */
 
 public class Control implements ControlMBean{
+	private String stateFile;
+	
+	public Control(String stateFile){
+		this.stateFile = stateFile;
+		loadState();
+	}
 	
 	private HashMap<String, HLRPort> ports = new HashMap<String, HLRPort>();
 
@@ -44,6 +55,7 @@ public class Control implements ControlMBean{
 		if(ports.containsKey(s)){
 			HLRPort p = ports.remove(s);
 			p.stopit();
+			saveState();
 			return true;
 		}
 		return false;
@@ -62,16 +74,68 @@ public class Control implements ControlMBean{
 		HLRPort p = new HLRPort(hlrcode, hlrport);
 		ports.put(s, p);
 		p.start();
+		saveState();
 		return true;
 	}
 	
+	public boolean restart(String hlrcode, String hlrport) {
+		if(!stop(hlrcode, hlrport))
+			return false;
+		return start(hlrcode, hlrport);
+	}
+	
+	//保存当前启动的状态， 以备重启进程的时候直接批量重启
+	private void saveState() {
+		PrintWriter out = null;
+		try{
+			out = new PrintWriter(new FileWriter(stateFile));
+			for(Entry<String, HLRPort> e: ports.entrySet()){
+				out.write(e.getKey());
+				out.write('\n');
+//				sb.append(e.getKey()).append(' ').append(e.getValue().isRunning()).append('\n');
+			}
+		}catch(IOException ex){
+			
+		}finally{
+			if(out != null)
+				out.close();
+		}
+	}
+	
+	/**
+	 * 进程启动是重起之前保存的状态
+	 */
+	private void loadState() {
+		BufferedReader bf = null;
+		try{
+			bf = new BufferedReader(new FileReader(stateFile));
+			while(true){
+				String line = bf.readLine();
+				line = line.trim();
+				int p = line.indexOf('.');
+				if(p <= 0)
+					continue;
+				start(line.substring(0, p), line.substring(p+1));
+			}
+		}catch(IOException ex){
+			
+		}finally{
+			if(bf != null)
+				try {
+					bf.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+		}
+	}
 	
 	
 	public static void main(String[] args) throws Exception {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         
+        String stateFile = System.getenv("LOGDIR") + "/SOAP_PROCESS."+System.getProperty("SOAP_PROCESS");
         ObjectName helloName = new ObjectName("offon:name=PortControl");
-        server.registerMBean(new Control(), helloName);
+        server.registerMBean(new Control(stateFile), helloName);
  
         System.out.println("start.....!");
         while(true)

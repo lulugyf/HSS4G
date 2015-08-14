@@ -42,7 +42,7 @@ public class HLRPort extends Thread{
 		this.hlrport = hlrport;
 	}
 	
-	private boolean readCfg(String etcdir, String hlrcode, String hlrport, Properties p){
+	public static boolean readCfg(String etcdir, String hlrcode, String hlrport, Properties p){
 		Yaml y = new Yaml();
 		Map m = null;
 		try {
@@ -61,7 +61,7 @@ public class HLRPort extends Thread{
 				return false;
 		}
 		if(!(o instanceof Map)){
-			logger.error("can not load hlrport config {}.{}", hlrcode, hlrport);
+//			logger.error("can not load hlrport config {}.{}", hlrcode, hlrport);
 			return false;
 		}
 		Map m1 = (Map)o;
