@@ -14,3 +14,41 @@ hf1.1:
   APN_TPL_ID: ericsson.YA.APN.cfg
   IPHEX_TO_INT: 3781~4011
   PROPERTIES: HLRSN=13
+
+# huawei VOLTE AS 接口测试    测试号：13541380001
+hzx.1:
+  manager.ip: 
+  manager.port: 
+  manager.user: 
+  manager.password: 
+  order_reloadable: true
+  remote.url: http://10.109.230.132:8080/spg
+  remote.timeout: 60000
+  http.keep.test: false
+  http.keep.cfg: /offon/gyf/lte/test/http.keep.properties
+  order.path: /offon/gyf/lte/test/orders/hzx.yaml
+  start.tag: <ResultCode>
+  end.tag: </ResultCode>
+  term.type: 1
+  APN_TPL_ID: 
+  IPHEX_TO_INT:
+  PROPERTIES:
+
+# huawei 内江指令手工测试
+hev.1:
+  manager.ip: 
+  manager.port: 
+  manager.user: 
+  manager.password: 
+  order_reloadable: true
+  remote.url: http://10.109.63.140:8002
+  order.path: /offon/bin/dev1/SOAP/hev/orders.yaml
+  remote.timeout: 60000
+  http.keep.test: false
+  http.keep.cfg: /offon/gyf/lte/test/http.keep.properties
+  start.tag: <ResultCode>
+  end.tag: </ResultCode>
+  term.type: 1
+  APN_TPL_ID: huawei.YBNJ.APN.cfg
+  IPHEX_TO_INT:
+  PROPERTIES: HLRSN=1
