@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -31,18 +32,41 @@ public class HLRPort extends Thread{
 	private String hlrcode;
 	private String hlrport;
 	private boolean running;
-	private ManagerComm com;
+	private BaseComm com;
 	private Logger logger;
+	private boolean handmode = false;
 
 	private static Object mutex = new Object();
 
 
+	public HLRPort(String hlrcode, String hlrport, BaseComm com){
+		this.hlrcode = hlrcode;
+		this.hlrport = hlrport;
+		handmode = true;
+		this.com = com;
+	}
 	public HLRPort(String hlrcode, String hlrport){
 		this.hlrcode = hlrcode;
 		this.hlrport = hlrport;
+		com = new ManagerComm();
 	}
 	
 	public static boolean readCfg(String etcdir, String hlrcode, String hlrport, Properties p){
+		Map<String, Properties> callers = new HashMap<String, Properties>();
+		return readCfg(etcdir, hlrcode, hlrport, p, callers, null);
+	}
+	
+	/**
+	 * 读取yaml格式的hss配置文件
+	 * @param etcdir
+	 * @param hlrcode
+	 * @param hlrport
+	 * @param p
+	 * @return
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static boolean readCfg(String etcdir, String hlrcode, String hlrport, Properties p,
+			Map<String, Properties> callers, Map ordergroups){
 		Yaml y = new Yaml();
 		Map m = null;
 		try {
@@ -65,101 +89,47 @@ public class HLRPort extends Thread{
 			return false;
 		}
 		Map m1 = (Map)o;
+		if(m1.containsKey("copy_from")){ //允许从其他配置中复制数据, 本配置项下的数据会覆盖被复制的数据， 这样可以只配置不同的项
+			o = m.get(m1.get("copy_from"));
+			if(o != null && (o instanceof Map )){
+				Map m2 = m1;
+				m1 = (Map)o;
+				for(Object k: m2.keySet()){ //覆盖原有的项
+					m1.put(k, m2.get(k));
+				}
+			}
+		}
 //		Properties p = new Properties();
-		for(Object k: m1.keySet()){
+		for(Object kk: m1.keySet()){
+			if(!(kk instanceof String))
+				continue;
+			String k = (String)kk;
 			Object v = m1.get(k);
 			if(v == null)
 				continue;
-			p.setProperty(String.valueOf(k), String.valueOf(v));
+			if(v instanceof Map && k.startsWith("caller.") && callers != null){
+				// 应该是 caller.$n 的配置了
+				Properties p1 = new Properties();
+				Map m3 = (Map)v;
+				for(Object k1: m3.keySet()){
+					Object v1 = m3.get(k1);
+					if(v1 != null)
+						p1.setProperty((String)k1, (String)v1);
+				}
+				callers.put(k, p1);
+			}else{
+				p.setProperty(String.valueOf(k), String.valueOf(v));
+			}
 		}
+		
+		if(ordergroups != null && m1.containsKey("group.orders"))
+			ordergroups.putAll((Map)m1.get("group.orders"));
 		
 		p.setProperty(Constants.HLRCODE, hlrcode);
 		p.setProperty(Constants.HLRPORT, hlrport);
 		return true;
 	}
 
-	private boolean readCfg(String etcdir, String hlrcode,
-			String hlrport, Properties p, String fileName)
-					throws java.io.IOException {
-		int cfgReadFlag = 0;
-		boolean ret = false;
-		final BufferedReader bf = new BufferedReader(new FileReader(new File(etcdir,
-				fileName)));
-		String line = null;
-		while ((line = bf.readLine()) != null) {
-			final String[] x = line.split("\\|");
-			if (x.length < 14) {
-				cfgReadFlag = 0;
-				continue;
-			}
-			if (!(hlrcode.equals(x[0]) && hlrport.equals(x[1]))) {
-				cfgReadFlag = 0;
-				continue;
-			}
-			cfgReadFlag = 1;
-
-			p.setProperty(Constants.HLRCODE, x[0]);
-			p.setProperty(Constants.HLRPORT, x[1]);
-			p.setProperty(Constants.MANAGER_IP, x[2]);
-			p.setProperty(Constants.MANAGER_PORT, x[3]);
-			p.setProperty(Constants.REMOTE_URL, x[4]);
-			p.setProperty(Constants.REMOTE_TIMEOUT, x[5]);
-			p.setProperty(Constants.HTTP_KEEP_TEST, x[6]);
-			p.setProperty(Constants.HTTP_KEEP_CFG, x[7]);
-			p.setProperty(Constants.ORDER_PATH, x[8]);
-			p.setProperty(Constants.START_TAG_KEY, x[9]);
-			p.setProperty(Constants.END_TAG_KEY, x[10]);
-			p.setProperty(Constants.MANAGER_USER, x[11]);
-			p.setProperty(Constants.MANAGER_PASSWORD, x[12]);
-			p.setProperty(Constants.TERM_TYPE, x[13]);
-//			System.setProperty(Constants.HLRCODE, x[0]);
-//			System.setProperty(Constants.HLRPORT, x[1]);
-//			System.setProperty(Constants.MANAGER_IP, x[2]);
-//			System.setProperty(Constants.MANAGER_PORT, x[3]);
-//			System.setProperty(Constants.REMOTE_URL, x[4]);
-//			System.setProperty(Constants.REMOTE_TIMEOUT, x[5]);
-//			System.setProperty(Constants.HTTP_KEEP_TEST, x[6]);
-//			System.setProperty(Constants.HTTP_KEEP_CFG, x[7]);
-//			System.setProperty(Constants.ORDER_PATH, x[8]);
-//			System.setProperty(Constants.START_TAG_KEY, x[9]);
-//			System.setProperty(Constants.END_TAG_KEY, x[10]);
-//			System.setProperty(Constants.MANAGER_USER, x[11]);
-//			System.setProperty(Constants.MANAGER_PASSWORD, x[12]);
-//			System.setProperty(Constants.TERM_TYPE, x[13]);
-			
-			if (x.length > 14) { // APN指令模版号和域名转换配置文件目录参数 $ETCDIR/ 下的文件名
-				if (x[14] == null || x[14].length() == 0 || x[14].equals("@")) {} else {
-					p.setProperty("__paramTran", x[14]);
-				}
-			}
-
-			if (x.length > 15) { // APN指令静态IP地址16进制转为10进制（目前只有诺西需要转换）
-				/*
-				 * 配置格式 如有需要转换的指令 : |3781~3241~3251| 如没有需要转换的指令： |@|
-				 */
-				final String strarr[] = x[15].split("~");
-				IP_HEX_INT = Arrays.asList(strarr);
-
-			} else {
-				p.setProperty("IPHEX_TO_INT", "@");
-			}
-
-			if (x.length > 16) {// HLRSN编码配置： 在hss.cfg文件配置值
-				final MapSplitter splitter = Splitter.on(',').omitEmptyStrings().trimResults()
-						.withKeyValueSeparator('=');
-				p.putAll(splitter.split(x[16]));
-			}
-			ret = true;
-			break;
-		}
-		bf.close();
-		if (cfgReadFlag == 0) {
-			logger.error("未读取到对应启动配置：HLRCODE=" + hlrcode + ", HLRPORT=" + hlrport + ",结束启动");
-			ret = false;
-		}
-//		System.out.println(p);
-		return ret;
-	}
 	
 	public boolean isRunning() {
 		return running;
@@ -169,32 +139,58 @@ public class HLRPort extends Thread{
 			com.stop();
 	}
 	
+	/**
+	 * 检查caller配置p1中的项， 如果没有设置， 则使用caller.0 的
+	 * @param p
+	 * @param p1
+	 */
+	private void checkCallerProperties(Properties p, Properties p1){
+		  /*
+		  order_reloadable: true
+		  remote.url: http://10.109.230.132:8080/spg
+		  remote.timeout: 60000
+		  http.keep.test: false
+		  http.keep.cfg: /offon/gyf/lte/test/http.keep.properties
+		  order.path: /offon/gyf/lte/test/orders/hzx.yaml
+		  start.tag: <ResultCode>
+		  end.tag: </ResultCode>
+		  APN_TPL_ID: 
+		  IPHEX_TO_INT:
+		  PROPERTIES: */
+		String[] pnames = new String[]{
+				"order_reloadable", "remote.url", "remote.timeout", "http.keep.test", "http.keep.cfg", 
+				"order.path", "start.tag", "end.tag", " APN_TPL_ID", "IPHEX_TO_INT", "PROPERTIES"};
+		for(String k: pnames){
+			if(!p1.containsKey(k) && p.containsKey(k))
+				p1.setProperty(k, p.getProperty(k));
+		}
+	}
+	
+	@SuppressWarnings("rawtypes")
 	public void run() {
-		synchronized(mutex){
-			MDC.put("hlrterm", String.format("%s.%s", hlrcode, hlrport));
-			logger = LoggerFactory.getLogger("com.sitech.crmpd.inter.common."+hlrcode);
+		String etcdir = null;
+		if(!handmode){ //运行模式
+			synchronized(mutex){
+				MDC.put("hlrterm", String.format("%s.%s", hlrcode, hlrport));
+				logger = LoggerFactory.getLogger("com.sitech.crmpd.inter.common."+hlrcode);
+			}
+			etcdir = System.getenv("ETCDIR");
+		}else{ //手工测试模式
+			etcdir = ".";
+			logger = LoggerFactory.getLogger(HLRPort.class);
+			System.setProperty("hlrname", String.format("%s.%s", hlrcode, hlrport));
 		}
 		try{
 
-			final String etcdir = System.getenv("ETCDIR");
 			final Properties properties = new Properties();
-//			try {
-//				boolean r = readCfg(etcdir, hlrcode, hlrport, properties,
-//						System.getProperty("configuration.location", "hss.cfg"));
-//				if(!r){
-//					return;
-//				}
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//				return;
-//			}
-			if(!readCfg(etcdir, hlrcode, hlrport, properties)){
+
+			Map<String, Properties> callers = new HashMap<String, Properties>();
+			Map ordergroups = new HashMap();
+			if(!readCfg(etcdir, hlrcode, hlrport, properties, callers, ordergroups)){
 				logger.error("readCfg failed");
 				return;
 			}
 			properties.setProperty("ETCDIR", etcdir);
-			
-	
 	
 			HttpSoapCaller caller = null;
 			try {
@@ -203,13 +199,35 @@ public class HLRPort extends Thread{
 				logger.error("make SoapCaller failed", e);
 				return;
 			}
-	
-			// 建立到 offon_manager 的连接
-			com = new ManagerComm(properties, caller, logger);
+			
+
+			com.setProps(properties);
+			com.setCaller(caller);
+			com.setLogger(logger);
 			running = true;
-			com.start(); // 进入主循环
+			if(callers.size() > 0){
+				// 添加多个 caller
+				for(int i=1; i<callers.size()+1; i++){
+					String k = "caller."+i;
+					if(!callers.containsKey(k))
+						continue;
+					Properties p1 = callers.get(k);
+					checkCallerProperties(properties, p1);
+					try {
+						HttpSoapCaller c = new HttpSoapCaller(p1, logger);
+						com.addCaller(c);
+					} catch (IOException e) {
+						logger.error("can not inialize caller: {}", k);
+					}
+				}
+			}
+			if(ordergroups.size() > 0){ //设置接口指令分解数据
+				com.setOrderGroups(ordergroups);
+			}
+			com.for_ever(); // 进入主循环
 		}finally{
-			MDC.remove("hlrterm");
+			if(!handmode)
+				MDC.remove("hlrterm");
 		}
 	}
 }

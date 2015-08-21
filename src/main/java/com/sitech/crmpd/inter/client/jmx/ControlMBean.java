@@ -4,4 +4,5 @@ public interface ControlMBean {
 	public String list();
 	public boolean stop(String hlrcode, String hlrport);
 	public boolean start(String hlrcode, String hlrport);
+	public boolean restart(String hlrcode, String hlrport);
 }

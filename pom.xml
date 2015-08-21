@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sitech.crmpd</groupId>
 	<artifactId>offon-soap</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.2</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -72,6 +72,11 @@
 							<goal>single</goal>
 						</goals>
 						<configuration>
+							<archive>
+						      <manifest>
+						        <mainClass>com.sitech.crmpd.inter.client.jmx.Control</mainClass>
+						      </manifest>
+						    </archive>
 							<descriptorRefs>
 								<descriptorRef>jar-with-dependencies</descriptorRef>
 							</descriptorRefs>

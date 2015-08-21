@@ -33,7 +33,7 @@ public class Control implements ControlMBean{
 	
 	public Control(String stateFile){
 		this.stateFile = stateFile;
-		loadState();
+		//loadState();
 	}
 	
 	private HashMap<String, HLRPort> ports = new HashMap<String, HLRPort>();
@@ -78,6 +78,7 @@ public class Control implements ControlMBean{
 		return true;
 	}
 	
+	@Override
 	public boolean restart(String hlrcode, String hlrport) {
 		if(!stop(hlrcode, hlrport))
 			return false;
@@ -111,6 +112,8 @@ public class Control implements ControlMBean{
 			bf = new BufferedReader(new FileReader(stateFile));
 			while(true){
 				String line = bf.readLine();
+				if(line == null)
+					break;
 				line = line.trim();
 				int p = line.indexOf('.');
 				if(p <= 0)

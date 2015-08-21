@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -94,9 +95,9 @@ OP8607: |
     
  * 2. 20150723 支持查询指令后取结果中的内容作为参数传到下一条指令中 
  *   order存放形式如果是 .yaml, 则查找 query_param 的key找到文件， 如果是目录， 则在目录中找query_param.yaml
- *   本配置的内容也可以直接加在 order指令配置文件中
- *   QP配置中必须有 query_order 项， 用于配置使用哪个指令来执行查询
- *   文件格式如下, 解析参数的正则表达式可以有多个：
+   本配置的内容也可以直接加在 order指令配置文件中
+   QP配置中可以有 query_order 项， 用于配置使用哪个指令来执行查询， 如果没有配置 query_order, 则使用最近一次执行指令的结果解析
+    文件格式如下, 解析参数的正则表达式可以有多个：
 QP3002: 
  - query_order=9101
  - apntplid=<Group><CNTXID>(\d+)</CNTXID><QOSTPLID>119</QOSTPLID>
@@ -147,11 +148,16 @@ public class HttpSoapCaller {
 	private int timeout, retryCount;
 	private Properties testProperties;
 	
+	private Pattern ns2rmv;  //执行结果中需要删除的 namespace
+	
 	private ParamTran ptran;
 	
 	private Map<String, Template> orderMap; //以yaml配置的指令，预先load到这里
 	private List<String> IPHEX_TO_INT;
-	Map<String, String> addProp;
+	private Map<String, String> addProp;
+	
+	private String url = null;
+	private String last_reply; //最后一次执行指令的返回结果
 	
 	// 查询结果中提取参数实现
 	static class QueryItem{
@@ -215,23 +221,50 @@ public class HttpSoapCaller {
 				}
 				LOGGER.debug("load {} query {} = {}", new Object[]{key, s.substring(0,p), varvalue});
 			}
-		}else{
-			LOGGER.error("invalid QP config: {}, must be a list", key);
+		}else if(value instanceof String){
+//			LOGGER.error("invalid QP config: {}, must be a list", key);
+			String s = (String)value;
+			int p = s.indexOf('=');
+			String varname = s.substring(0,p);
+			String varvalue = s.substring(p+1);
+			l.add(new QueryItem(varname, Pattern.compile(varvalue)));
 		}
 		if(l.size() > 0 && queryorders.containsKey(key))
 			queryparams.put(key, l);
 	}
 	
+	/**
+	 *  获取最后一次指令返回的结果
+	 * @return 
+	 */
+	public String getLastReply(){
+		return last_reply;
+	}
+	public void setLastReplay(String last_reply){
+		this.last_reply = last_reply;
+	}
+	
 	private long orderFileChangeTime = 0L; //这个如果>0, 则标识着需要自动检查指令文件是否更新， 更新后自动加载
 	                                 //自动加载的配置为增加属性 order_reloadable （值不检测）
 	private String orderPath;
+	
+	/**
+	 * 读取指令配置文件
+	 * @param init  是否为启动时的加载
+	 * @throws IOException
+	 */
 	private void orderReload(boolean init) throws IOException{
 		File yamlfile = new File(orderPath);
 		if(!init && !(orderFileChangeTime > 0 && yamlfile.lastModified() > orderFileChangeTime)){
 			return;
 		}
 		LOGGER.warn("loading order config:{}", orderPath);
-		Map m = (Map)new Yaml().load(new FileInputStream(yamlfile));
+		Map m = null;
+		try{
+			m =(Map)new Yaml().load(new FileInputStream(yamlfile));
+		}catch(Throwable e){
+			LOGGER.error("order file load failed", e);
+		}
 		orderMap = new HashMap<String, Template>();
 		StringTemplateResourceLoader resourceLoader = new StringTemplateResourceLoader();
 		Configuration cfg = Configuration.defaultConfiguration();
@@ -239,12 +272,25 @@ public class HttpSoapCaller {
 		
 		String header = (String)m.get("header");
 		String footer = (String)m.get("footer");
+		Template t = null;
 		for(Object o: m.keySet()){
 			String key = (String)o;
 			if(key.startsWith("OP")){ //指令配置
-				String value = (String)m.get(key);
+				String value = String.valueOf(m.get(key));
 				key = key.substring(2);
-				Template t = gt.getTemplate(header+value+footer);
+				if(key.indexOf('.') > 0){
+					// 衍生指令:  OP${n}.${m},  被衍生指令为 ${n},  指令后的内容替换被衍生指令的 __var__ 串
+					String k = key.substring(0, key.indexOf('.'));
+					String v = (String)m.get("OP"+k);
+					if(v == null){
+						LOGGER.error("regenerated order {} found org failed", key);
+						continue;
+					}
+					v = v.replace("__var__", value);
+					t = gt.getTemplate(header + v + footer);
+				}else{
+					t = gt.getTemplate(header+value+footer);
+				}
 				orderMap.put(key, t);
 
 			}else if(key.startsWith("QP")){ //查询参数配置
@@ -258,9 +304,10 @@ public class HttpSoapCaller {
 	
 	private void init(Properties properties) throws IOException{
 		this.properties = properties;
+		url = properties.getProperty(Constants.REMOTE_URL);
 		String orderPath = properties.getProperty(Constants.ORDER_PATH);
 		if (orderPath.charAt(0) != '/') {
-			orderPath = System.getenv("ETCDIR") + "/" + orderPath;
+			orderPath = properties.getProperty("ETCDIR") + "/" + orderPath;
 		}
 		
 		File orderFile = new File(orderPath);
@@ -326,7 +373,6 @@ public class HttpSoapCaller {
 		}
 		
 		
-		
 		if(properties.containsKey("APN_TPL_ID"))
 			setTran(new ParamTran(properties.getProperty("ETCDIR"), properties.getProperty("APN_TPL_ID")));
 		if (properties.containsKey("IPHEX_TO_INT")) {
@@ -335,7 +381,12 @@ public class HttpSoapCaller {
 		if(properties.containsKey("PROPERTIES")){
 			MapSplitter splitter = Splitter.on(',').omitEmptyStrings().trimResults()
 					.withKeyValueSeparator('=');
-			setAddProp( splitter.split(properties.getProperty("PROPERTIES"))  );
+			addProp = splitter.split(properties.getProperty("PROPERTIES"));
+		}
+		
+		if(properties.containsKey("removenamespace")){
+			String regstr = "xmlns:(\\w+)=\\\""+properties.getProperty("removenamespace")+"\\\"";
+			ns2rmv = Pattern.compile(regstr);
 		}
 
 	}
@@ -395,25 +446,31 @@ public class HttpSoapCaller {
 	 */
 	private void executeQuery(String ordercode, CmdDataAck qparam, Template out_tpl){
 		String queryOrder = queryorders.get(ordercode);
-		LOGGER.debug("--query order:{} for org_order:{}", queryOrder, ordercode);
-		Template template = findTemplate(queryOrder);
-		if(template == null){
-			LOGGER.error("--not found query order:{}", queryOrder);
-			return;
+		String result = null;
+		if(queryOrder != null){ //如果定义了查询指令， 则通过查询指令获得结果
+			LOGGER.debug("--query order:{} for org_order:{}", queryOrder, ordercode);
+			Template template = findTemplate(queryOrder);
+			if(template == null){
+				LOGGER.error("--not found query order:{}", queryOrder);
+				return;
+			}
+			if(addProp != null)
+				template.binding(addProp);
+			template.binding("phoneNo", qparam.phone_no);
+			template.binding("imsi",    qparam.imsi_no);
+			template.binding("ssInfo1", qparam.ss_info1);
+			template.binding("ssInfo2", qparam.ss_info2);
+			template.binding("ssInfo3", qparam.ss_info3);
+			String cmdstr = template.render();
+			result = retry(cmdstr, retryCount);
+			if(result == null || result.length() < 20){
+				LOGGER.error("query order {} failed: {}", queryOrder, result);
+				return;
+			}
+		}else{ //否则从上次的结果中获取
+			result = last_reply;
 		}
-		if(addProp != null)
-			template.binding(addProp);
-		template.binding("phoneNo", qparam.phone_no);
-		template.binding("imsi",    qparam.imsi_no);
-		template.binding("ssInfo1", qparam.ss_info1);
-		template.binding("ssInfo2", qparam.ss_info2);
-		template.binding("ssInfo3", qparam.ss_info3);
-		String cmdstr = template.render();
-		String result = retry(cmdstr, retryCount);
-		if(result == null || result.length() < 20){
-			LOGGER.error("query order {} failed: {}", queryOrder, result);
-			return;
-		}
+		
 		// 从查询指令的结果中解析参数出来， 传入到out_tpl中
 		for(QueryItem q: queryparams.get(ordercode)){
 				Matcher matcher = q.pattern.matcher(result);
@@ -428,6 +485,36 @@ public class HttpSoapCaller {
 				LOGGER.debug("key[{}] value[{}]", q.name, v);
 			}
 	}
+	
+	/**
+	 * 删除结果串中的某个namespace, 以便做结果匹配， 如  xmlns:m="http://www.chinamobile.com/IMS/VoLTEAS/"
+	 *      <m:ResultCode>0</m:ResultCode>  ==>  <ResultCode>0</ResultCode>
+	 * @param result
+	 * @param ns
+	 * @return
+	 */
+	private String removeNS(String result){ //, String ns){
+//		String regstr = "xmlns:(\\w+)=\\\""+ns+"\\\"";
+//		Pattern pattern = Pattern.compile(regstr);
+		Matcher matcher = ns2rmv.matcher(result);
+		String m = null;
+		if(matcher != null && matcher.find()){
+			m = matcher.group(1);
+		}else{
+			return result;
+		}
+		
+		String s = result.replaceAll("<"+m+"\\:", "<");
+		s = s.replaceAll("</"+m+"\\:", "<");
+		return s;
+	}
+	
+	private String ph2domain(String s){
+		StringBuffer b = new StringBuffer();
+		for(int i=s.length(); i>0; i--)
+			b.append(s.charAt(i-1)).append('.');
+		return b.toString();
+	}
 
 	/**
 	 * 生成要执行的指令内容
@@ -441,13 +528,18 @@ public class HttpSoapCaller {
 		if(addProp != null)
 			template.binding(addProp);
 		
-		if(queryparams.containsKey(cmd.ordercode) && queryorders.containsKey(cmd.ordercode)){
+		if(queryparams.containsKey(cmd.ordercode)  ){
 			// 需要使用查询指令结果来 获取参数
 			executeQuery(cmd.ordercode, cmd, template);
 		}
 		if(IPHEX_TO_INT!=null && IPHEX_TO_INT.contains(cmd.ordercode)){
 			final String intIP = IP_HEX_to_INT(cmd.ss_info2);
 			cmd.ss_info2=intIP;
+		}
+		if(orderMap.containsKey("__enum__")){
+			// 对于enum指令， 需要对手机号码做域名转换
+			template.binding("phoneNoDomain", ph2domain(cmd.phone_no));
+			template.binding("phoneHeadDomain", ph2domain(cmd.phone_no.substring(0, 7)));
 		}
 		template.binding("phoneNo", cmd.phone_no);
 		template.binding("imsi",    cmd.imsi_no);
@@ -473,11 +565,13 @@ public class HttpSoapCaller {
 			ret.stream_id = cmd.stream_id;
 			ret.ordercode = cmd.ordercode;
 			ret.phone_no = cmd.phone_no;
-			ret.info = "returned by hss client";
+			ret.info = String.valueOf(resultDesc);
 		}
 		return retn;
 	}
 	
+	private String resultDesc = null;
+	private Pattern resultDescPattern = Pattern.compile("<ResultDesc>(.+)<\\/ResultDesc>");
 	private int parseResultCode(String data) {
 		if(data == null)
 			return 7713;
@@ -489,6 +583,11 @@ public class HttpSoapCaller {
 			if (rIndex != -1) {
 				final String resultCode = data.substring(lIndex + startTag.length(), rIndex);
 				try {
+					// <ResultDesc> </ResultDesc>
+					Matcher matcher = resultDescPattern.matcher(data);
+					resultDesc = null;
+					if(matcher != null && matcher.find())
+						resultDesc = matcher.group(1);
 					return Integer.parseInt(resultCode) % 10000;
 				} catch (final NumberFormatException e) {
 					return 7712;
@@ -502,7 +601,7 @@ public class HttpSoapCaller {
 		CloseableHttpResponse httpResponse = null;
 		HttpPost httpPost = null;
 		try {
-			httpPost = new HttpPost(properties.getProperty(Constants.REMOTE_URL));
+			httpPost = new HttpPost(url);
 			httpPost.setHeader("SOAPAction", "");
 			httpPost.setEntity(new StringEntity(data, TEXT_XML));
 			if (logIt) {
@@ -511,14 +610,17 @@ public class HttpSoapCaller {
 			httpResponse = getHttpClient().execute(httpPost);
 			StatusLine sl = httpResponse.getStatusLine();
 			if(sl.getStatusCode() != 200){
-				LOGGER.error("order execute failed {} {}", sl.getStatusCode(), sl.getReasonPhrase());
+				LOGGER.error("order execute HTTP failed {} {} {}", new Object[]{sl.getStatusCode(), sl.getReasonPhrase(), url});
 				return "7711";
 			}
 			data = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
+			if(ns2rmv != null){
+				data = removeNS(data); //移除结果串中的 ns
+			}
 			if (logIt) {
 				LOGGER.info("receive = [{}]", data);
 			}
-			//last_reply = data;
+			last_reply = data;
 			return data;
 			
 		} catch (final IOException e) {
@@ -559,9 +661,7 @@ public class HttpSoapCaller {
 	public void setIPox(List<String> IPHEX_TO_INT){
 		this.IPHEX_TO_INT=IPHEX_TO_INT;
 	}
-	public void setAddProp(Map<String, String> addProp){
-		this.addProp = addProp;
-	}
+
 
 	/**
 	 * 将16进制的 IP地址转为 10进制
@@ -590,5 +690,9 @@ public class HttpSoapCaller {
 		
 		System.out.println(retIP.toString());
 		return retIP.toString();
+	}
+	
+	public Set<String> getAllOrderCode(){
+		return orderMap.keySet();
 	}
 }

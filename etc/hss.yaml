@@ -33,6 +33,22 @@ hzx.1:
   APN_TPL_ID: 
   IPHEX_TO_INT:
   PROPERTIES:
+  caller.1:  #接口1， 为了兼容原有的配置， 原配置中的接口理解为 caller.0, 每个接口使用各自的指令配置文件
+                 # caller的数字编号必须从1开始，按1累加，否则无效
+    remote.url: http://10.95.233.202:8002
+    remote.timeout: 60000
+    http.keep.test: false
+    order.path: /offon/etc/hss_orders/HUAWEI_cd25.yaml
+  caller.2:
+    remote.url: http://10.95.233.202:8002
+    remote.timeout: 60000
+    http.keep.test: false
+    order.path: /offon/etc/hss_orders/HUAWEI_cd25.yaml
+  group.orders:  #组合指令， 允许在不同的接口上执行,  指令代码后的 0 1 2 为指定的接口编号
+    8001:
+      - 8002 0
+      - 8003 1
+      - 8004 2
 
 # huawei 内江指令手工测试
 hev.1:
