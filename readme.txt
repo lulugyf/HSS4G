@@ -240,3 +240,7 @@ OPt0005.3: 3
 12. 手工接口， 文件批量指令接口， 以及manager正式运行接口统一
     手工和批量执行入口仍然在 ...jmx.HandCmd 中
     三种接口分别为 FileComm, ConsoleComm, ManagerComm,  都继承自BaseComm
+    
+    
+13. manager 连接断开后， 状态没有变化， 得处理下
+       TODO:  可用的hlrcode: hd5 hed

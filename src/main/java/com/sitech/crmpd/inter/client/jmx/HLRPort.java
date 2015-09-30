@@ -170,11 +170,12 @@ public class HLRPort extends Thread{
 	public void run() {
 		String etcdir = null;
 		if(!handmode){ //运行模式
-			synchronized(mutex){
-				MDC.put("hlrterm", String.format("%s.%s", hlrcode, hlrport));
-				logger = LoggerFactory.getLogger("com.sitech.crmpd.inter.common."+hlrcode);
-			}
+//			synchronized(mutex){
+//				MDC.put("hlrterm", String.format("%s.%s", hlrcode, hlrport));
+//				logger = LoggerFactory.getLogger("com.sitech.crmpd.inter.common."+hlrcode);
+//			}
 			etcdir = System.getenv("ETCDIR");
+			logger = LoggerUtil.getLogger(System.getenv("LOGDIR"), hlrcode+"."+hlrport);
 		}else{ //手工测试模式
 			etcdir = ".";
 			logger = LoggerFactory.getLogger(HLRPort.class);
@@ -226,8 +227,10 @@ public class HLRPort extends Thread{
 			}
 			com.for_ever(); // 进入主循环
 		}finally{
-			if(!handmode)
-				MDC.remove("hlrterm");
+			if(!handmode){
+//				MDC.remove("hlrterm");
+			}
+			running = false;
 		}
 	}
 }
