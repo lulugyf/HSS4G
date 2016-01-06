@@ -196,7 +196,7 @@ public class HLRPort extends Thread{
 			HttpSoapCaller caller = null;
 			try {
 				caller = new HttpSoapCaller(properties, logger);
-			} catch (IOException e) {
+			} catch (Exception e) {
 				logger.error("make SoapCaller failed", e);
 				return;
 			}
@@ -217,8 +217,8 @@ public class HLRPort extends Thread{
 					try {
 						HttpSoapCaller c = new HttpSoapCaller(p1, logger);
 						com.addCaller(c);
-					} catch (IOException e) {
-						logger.error("can not inialize caller: {}", k);
+					} catch (Exception e) {
+						logger.error("can not inialize caller: {}", k, e);
 					}
 				}
 			}

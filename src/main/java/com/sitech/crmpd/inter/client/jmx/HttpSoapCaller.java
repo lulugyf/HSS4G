@@ -315,7 +315,7 @@ public class HttpSoapCaller {
 			throw new IOException("orderPath not found");
 		if(orderFile.isFile() && orderPath.endsWith(".yaml")){ //loading order as a single yaml file, not a folder
 			this.orderPath = orderPath;
-			LOGGER.info("order_reloadable={}", properties.getProperty("order_reloadable"));
+//			LOGGER.info("order_reloadable={}", properties.getProperty("order_reloadable"));
 			if("true".equalsIgnoreCase(properties.getProperty("order_reloadable"))){
 				this.orderFileChangeTime = new File(this.orderPath).lastModified();
 				LOGGER.info("---order is reloadable");
@@ -389,6 +389,7 @@ public class HttpSoapCaller {
 			ns2rmv = Pattern.compile(regstr);
 		}
 
+		LOGGER.info("init done");
 	}
 	
 	public void setTran(ParamTran t){
