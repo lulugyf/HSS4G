@@ -28,6 +28,7 @@ import org.apache.http.config.SocketConfig;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
@@ -338,6 +339,8 @@ public class HttpSoapCaller {
 		} catch (final NumberFormatException e) {
 			retryCount = 1;
 		}
+		
+		/* don't use keep alive test again, use connection pool
 		final boolean httpKeepTest = Boolean.parseBoolean(properties
 				.getProperty(Constants.HTTP_KEEP_TEST));
 		CmdDataAck cmd = new CmdDataAck();
@@ -368,9 +371,9 @@ public class HttpSoapCaller {
 						retry(data, 0, false);
 					}
 				}, period, period);
-			} catch (final ParseException e) {}
+			} catch (final ParseException e) {}  
 
-		}
+		}*/
 		
 		
 		if(properties.containsKey("APN_TPL_ID"))
@@ -395,8 +398,32 @@ public class HttpSoapCaller {
 	public void setTran(ParamTran t){
 		this.ptran = t;
 	}
+	
+	private static int timeout1 = 60000;
+	private static HttpClientBuilder builder = null;
+	static {
+		final SocketConfig config = SocketConfig.custom().setSoTimeout(timeout1).build();
 
-	private synchronized CloseableHttpClient getHttpClient() {
+		final PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
+		final int max = 100;
+		cm.setMaxTotal(max);
+		cm.setDefaultMaxPerRoute(max);
+		cm.setDefaultSocketConfig(config);
+		builder = HttpClients
+				.custom()
+				.setConnectionManager(cm)
+				.setDefaultSocketConfig(config)
+				.setDefaultRequestConfig(
+						RequestConfig.custom().setConnectTimeout(timeout1)
+						.setConnectionRequestTimeout(timeout1).setSocketTimeout(timeout1)
+						.build());
+	}
+	
+	private synchronized static CloseableHttpClient getHttpClient() {
+			return builder.build();
+	}
+
+	private synchronized CloseableHttpClient __getHttpClient() {
 		if (httpClient == null) {
 			final SocketConfig config = SocketConfig.custom().setSoTimeout(timeout).build();
 
@@ -610,7 +637,9 @@ public class HttpSoapCaller {
 			}
 			httpResponse = getHttpClient().execute(httpPost);
 			StatusLine sl = httpResponse.getStatusLine();
-			if(sl.getStatusCode() != 200){
+			if(sl.getStatusCode() == 500){
+				
+			}else if(sl.getStatusCode() != 200){
 				LOGGER.error("order execute HTTP failed {} {} {}", new Object[]{sl.getStatusCode(), sl.getReasonPhrase(), url});
 				return "7711";
 			}
