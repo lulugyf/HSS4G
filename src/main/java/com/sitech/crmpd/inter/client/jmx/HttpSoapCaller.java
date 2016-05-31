@@ -25,12 +25,14 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.pool.PoolStats;
 import org.apache.http.util.EntityUtils;
 import org.beetl.core.Configuration;
 import org.beetl.core.GroupTemplate;
@@ -399,51 +401,12 @@ public class HttpSoapCaller {
 		this.ptran = t;
 	}
 	
-	private static int timeout1 = 60000;
-	private static HttpClientBuilder builder = null;
-	static {
-		final SocketConfig config = SocketConfig.custom().setSoTimeout(timeout1).build();
 
-		final PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-		final int max = 100;
-		cm.setMaxTotal(max);
-		cm.setDefaultMaxPerRoute(max);
-		cm.setDefaultSocketConfig(config);
-		builder = HttpClients
-				.custom()
-				.setConnectionManager(cm)
-				.setDefaultSocketConfig(config)
-				.setDefaultRequestConfig(
-						RequestConfig.custom().setConnectTimeout(timeout1)
-						.setConnectionRequestTimeout(timeout1).setSocketTimeout(timeout1)
-						.build());
-	}
-	
-	private synchronized static CloseableHttpClient getHttpClient() {
-			return builder.build();
+
+	public String cmStats() {
+		return HttpConnectionManager.cmStats();
 	}
 
-	private synchronized CloseableHttpClient __getHttpClient() {
-		if (httpClient == null) {
-			final SocketConfig config = SocketConfig.custom().setSoTimeout(timeout).build();
-
-			final PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-			final int max = 100;
-			cm.setMaxTotal(max);
-			cm.setDefaultMaxPerRoute(max);
-			cm.setDefaultSocketConfig(config);
-			httpClient = HttpClients
-					.custom()
-					.setConnectionManager(cm)
-					.setDefaultSocketConfig(config)
-					.setDefaultRequestConfig(
-							RequestConfig.custom().setConnectTimeout(timeout)
-							.setConnectionRequestTimeout(timeout).setSocketTimeout(timeout)
-							.build()).build();
-		}
-		return httpClient;
-	}
-	
 	private Template findTemplate(String ordercode){
 		Template template = null;
 		if(orderMap != null){
@@ -518,7 +481,6 @@ public class HttpSoapCaller {
 	 * 删除结果串中的某个namespace, 以便做结果匹配， 如  xmlns:m="http://www.chinamobile.com/IMS/VoLTEAS/"
 	 *      <m:ResultCode>0</m:ResultCode>  ==>  <ResultCode>0</ResultCode>
 	 * @param result
-	 * @param ns
 	 * @return
 	 */
 	private String removeNS(String result){ //, String ns){
@@ -635,7 +597,7 @@ public class HttpSoapCaller {
 			if (logIt) {
 				LOGGER.info("send = [{}]", data);
 			}
-			httpResponse = getHttpClient().execute(httpPost);
+			httpResponse = HttpConnectionManager.getHttpClient().execute(httpPost);
 			StatusLine sl = httpResponse.getStatusLine();
 			if(sl.getStatusCode() == 500){
 				
@@ -680,8 +642,8 @@ public class HttpSoapCaller {
 	}
 
 	/**
-	 * @param data2
-	 * @param i
+	 * @param data
+	 * @param retry
 	 * @return
 	 */
 	private String retry(String data, int retry) {

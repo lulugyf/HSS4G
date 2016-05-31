@@ -60,6 +60,11 @@ public class Control implements ControlMBean{
 		}
 		return false;
 	}
+	@Override
+	public String cm() {
+		return HttpConnectionManager.cmStats();
+	}
+
 
 	@Override
 	public boolean start(String hlrcode, String hlrport) {
