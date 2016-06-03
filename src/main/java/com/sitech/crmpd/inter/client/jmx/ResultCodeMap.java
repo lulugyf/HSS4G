@@ -45,4 +45,11 @@ public class ResultCodeMap {
 
         }
     }
+    public int mapcode(String data) {
+        for(CodeItem ci: l) {
+            if(data.indexOf(ci.val) >= 0)
+                return ci.code;
+        }
+        return -1;
+    }
 }

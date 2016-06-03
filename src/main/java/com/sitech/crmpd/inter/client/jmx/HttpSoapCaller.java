@@ -152,6 +152,8 @@ public class HttpSoapCaller {
 	private Properties testProperties;
 	
 	private Pattern ns2rmv;  //执行结果中需要删除的 namespace
+
+	private ResultCodeMap resultmap = null; //网元应答内存匹配对应返回代码的配置
 	
 	private ParamTran ptran;
 	
@@ -315,7 +317,7 @@ public class HttpSoapCaller {
 		
 		File orderFile = new File(orderPath);
 		if(!orderFile.exists())
-			throw new IOException("orderPath not found");
+			throw new IOException("orderPath not found:"+orderPath);
 		if(orderFile.isFile() && orderPath.endsWith(".yaml")){ //loading order as a single yaml file, not a folder
 			this.orderPath = orderPath;
 //			LOGGER.info("order_reloadable={}", properties.getProperty("order_reloadable"));
@@ -340,6 +342,11 @@ public class HttpSoapCaller {
 			retryCount = Integer.parseInt(properties.getProperty(Constants.RETRY_COUNT), 1);
 		} catch (final NumberFormatException e) {
 			retryCount = 1;
+		}
+
+		String resultmapfile = properties.getProperty(Constants.RESULT_MAP, "");
+		if(!"".equals(resultmapfile)) {
+			resultmap = new ResultCodeMap(resultmapfile);
 		}
 		
 		/* don't use keep alive test again, use connection pool
@@ -567,6 +574,11 @@ public class HttpSoapCaller {
 			return 7713;
 		if(data.length() == 4)
 			return Integer.parseInt(data);
+		if(resultmap != null) {
+			int rcode = resultmap.mapcode(data);
+			if (rcode != -1)
+				return rcode;
+		}
 		final int lIndex = data.indexOf(startTag);
 		if (lIndex != -1) {
 			final int rIndex = data.indexOf(endTag, lIndex);
@@ -594,6 +606,8 @@ public class HttpSoapCaller {
 			httpPost = new HttpPost(url);
 			httpPost.setHeader("SOAPAction", "");
 			httpPost.setEntity(new StringEntity(data, TEXT_XML));
+			if(LOGGER.isDebugEnabled())
+				LOGGER.debug("==to: {}", url);
 			if (logIt) {
 				LOGGER.info("send = [{}]", data);
 			}

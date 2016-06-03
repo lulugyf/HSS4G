@@ -35,4 +35,6 @@ public class Constants {
 			"end.tag");
 	public static final String TERM_TYPE = System.getProperty("term.type.key",
 			"term.type");
+	public static final String RESULT_MAP = System.getProperty("result.map.key",
+			"result.map");
 }

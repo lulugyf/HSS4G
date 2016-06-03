@@ -58,19 +58,19 @@ public class HLRPort extends Thread{
 	
 	/**
 	 * 读取yaml格式的hss配置文件
-	 * @param etcdir
+	 * @param conf  配置文件路径
 	 * @param hlrcode
 	 * @param hlrport
 	 * @param p
 	 * @return
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static boolean readCfg(String etcdir, String hlrcode, String hlrport, Properties p,
+	public static boolean readCfg(String conf, String hlrcode, String hlrport, Properties p,
 			Map<String, Properties> callers, Map ordergroups){
 		Yaml y = new Yaml();
 		Map m = null;
 		try {
-			m = (Map)y.load(new FileInputStream(new File(etcdir, "hss.yaml")));
+			m = (Map)y.load(new FileInputStream(new File(conf)));
 		} catch (FileNotFoundException e) {
 			return false;
 		}
@@ -157,10 +157,11 @@ public class HLRPort extends Thread{
 		  APN_TPL_ID: 
 		  IPHEX_TO_INT:
 		  PROPERTIES: */
-		String[] pnames = new String[]{
-				"order_reloadable", "remote.url", "remote.timeout", "http.keep.test", "http.keep.cfg", 
-				"order.path", "start.tag", "end.tag", " APN_TPL_ID", "IPHEX_TO_INT", "PROPERTIES"};
-		for(String k: pnames){
+
+		for(Object k1: p.keySet()){
+			if( !( k1 instanceof  String ))
+				continue;
+			String k = (String)k1;
 			if(!p1.containsKey(k) && p.containsKey(k))
 				p1.setProperty(k, p.getProperty(k));
 		}
@@ -170,10 +171,6 @@ public class HLRPort extends Thread{
 	public void run() {
 		String etcdir = null;
 		if(!handmode){ //运行模式
-//			synchronized(mutex){
-//				MDC.put("hlrterm", String.format("%s.%s", hlrcode, hlrport));
-//				logger = LoggerFactory.getLogger("com.sitech.crmpd.inter.common."+hlrcode);
-//			}
 			etcdir = System.getenv("ETCDIR");
 			logger = LoggerUtil.getLogger(System.getenv("LOGDIR"), hlrcode+"."+hlrport);
 		}else{ //手工测试模式
@@ -181,13 +178,14 @@ public class HLRPort extends Thread{
 			logger = LoggerFactory.getLogger(HLRPort.class);
 			System.setProperty("hlrname", String.format("%s.%s", hlrcode, hlrport));
 		}
+		String conf = System.getProperty("CONF", etcdir + "/hss.yaml");
 		try{
 
 			final Properties properties = new Properties();
 
 			Map<String, Properties> callers = new HashMap<String, Properties>();
 			Map ordergroups = new HashMap();
-			if(!readCfg(etcdir, hlrcode, hlrport, properties, callers, ordergroups)){
+			if(!readCfg(conf, hlrcode, hlrport, properties, callers, ordergroups)){
 				logger.error("readCfg failed");
 				return;
 			}
