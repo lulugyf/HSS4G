@@ -1,4 +1,4 @@
-package com.sitech.crmpd.inter.client.jmx;
+package com.sitech.crmpd.inter.client.jmx.func;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

@@ -1,5 +1,9 @@
 package com.sitech.crmpd.inter.common;
 
+import org.beetl.core.Template;
+
+import java.util.Map;
+
 public class CmdDataAck extends BasePkt {
 	public static String ack_type = "";
 	public int retn; /* 返回代码 */
@@ -48,5 +52,24 @@ public class CmdDataAck extends BasePkt {
 		ss_info3 = getString(buf, offset, len_ss_info3).trim();
 		offset += len_ss_info3;
 		return offset;
+	}
+
+	public String render(Template template, Map<String, String> addProp) {
+		if(addProp != null)
+			template.binding(addProp);
+		template.binding("phoneNo", this.phone_no);
+		template.binding("imsi",    this.imsi_no);
+		template.binding("ssInfo1", this.ss_info1);
+		template.binding("ssInfo2", this.ss_info2);
+		template.binding("ssInfo3", this.ss_info3);
+		return template.render();
+	}
+
+	public void binding(Template template) {
+		template.binding("phoneNo", this.phone_no);
+		template.binding("imsi",    this.imsi_no);
+		template.binding("ssInfo1", this.ss_info1);
+		template.binding("ssInfo2", this.ss_info2);
+		template.binding("ssInfo3", this.ss_info3);
 	}
 }

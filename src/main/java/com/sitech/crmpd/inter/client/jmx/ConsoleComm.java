@@ -15,6 +15,7 @@ import com.sitech.crmpd.inter.common.CmdDataReq;
 public class ConsoleComm extends BaseComm {
 
 	private Scanner scanner;
+	private int lineno = 0;
 	private final MessageFormat format = new MessageFormat("{0}|{1}|{2}|{3}|{4}|{5}");
 	
 	@Override
@@ -49,7 +50,7 @@ public class ConsoleComm extends BaseComm {
 			ack.ss_info1 = (String)p[3];
 			ack.ss_info2 = (String)p[4];
 			ack.ss_info3 = (String)p[5];
-			ack.stream_id = "1";
+			ack.stream_id = String.valueOf(lineno++);
 			ack.retn = 2001;
 			return 1;
 		}

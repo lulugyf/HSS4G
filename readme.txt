@@ -243,4 +243,20 @@ OPt0005.3: 3
     
     
 13. manager 连接断开后， 状态没有变化， 得处理下
-       TODO:  可用的hlrcode: hd5 hed
+       已处理， 在manager断开后状态会变为false， 可以通过jmx来检测到并重启它
+	   
+14. 根据返回报文内容， 映射到错误代码
+		映射配置是可选的， 配置项 result.map 指向一个文件名, 文件的格式为： nnnn <some content>
+		匹配方式很简单， 只是使用java的 String.indexOf 来查找
+
+15. 扩展查询后执行指令的处理功能， 允许在查询结果的匹配中使用变量
+    暂时只支持指令参数中的变量， 比如功能点2中的配置：
+    QP3002:
+     - query_order=9222
+     - cntxid=<Group><CNTXID>(\d+)</CNTXID><PDPTYPE>IPV4</PDPTYPE><QOSTPLID>${ssInfo3}</QOSTPLID>
+    其中的匹配模式cntxid= 中使用了 ssInfo3 这个变量
+
+16. 返回错误代码新增regexp模式的配置:
+    return.code.pattern: "<ResultCode>(.+)<\/ResultCode>"
+    另外增加了对返回描述的匹配处理(这个是以failover的模式处理的，第一个匹配不到则匹配第二个, 中间以;分隔)：
+    return.desc.pattern: "<ResultDesc>(.+)<\/ResultDesc>;<faultstring>(.+)</faultstring>"

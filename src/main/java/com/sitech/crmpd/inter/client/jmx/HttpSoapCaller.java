@@ -2,37 +2,26 @@ package com.sitech.crmpd.inter.client.jmx;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.text.MessageFormat;
-import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.sitech.crmpd.inter.client.jmx.func.QueryParse;
+import com.sitech.crmpd.inter.client.jmx.func.ResultCodeMap;
+import com.sitech.crmpd.inter.client.jmx.func.ResultCodeParse;
 import org.apache.http.Consts;
 import org.apache.http.StatusLine;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.pool.PoolStats;
 import org.apache.http.util.EntityUtils;
 import org.beetl.core.Configuration;
 import org.beetl.core.GroupTemplate;
@@ -147,14 +136,12 @@ public class HttpSoapCaller {
 	private Properties properties;
 	private GroupTemplate groupTemplate;
 	private volatile CloseableHttpClient httpClient;
-	private String startTag, endTag;
 	private int timeout, retryCount;
 	private Properties testProperties;
 	
 	private Pattern ns2rmv;  //执行结果中需要删除的 namespace
 
-	private ResultCodeMap resultmap = null; //网元应答内存匹配对应返回代码的配置
-	
+
 	private ParamTran ptran;
 	
 	private Map<String, Template> orderMap; //以yaml配置的指令，预先load到这里
@@ -163,79 +150,19 @@ public class HttpSoapCaller {
 	
 	private String url = null;
 	private String last_reply; //最后一次执行指令的返回结果
+	private QueryParse queryparse ;
 	
-	// 查询结果中提取参数实现
-	static class QueryItem{
-		String name;
-		Pattern pattern;
-		QueryItem(String n, Pattern p){ name = n; pattern = p; }
-	}
-	private Map<String, List<QueryItem>> queryparams = new HashMap<String, List<QueryItem>>(); //查询参数对应需要解析的正则表达式列表
-	private Map<String, String> queryorders = new HashMap<String, String>(); //ordercode 对应的查询order
-	
+
 	public HttpSoapCaller(Properties properties, Logger log) throws IOException {
 		LOGGER = log;
+		queryparse = new QueryParse(log);
 		init(properties);
 	}
 
 	HttpSoapCaller(Properties properties) throws IOException {
 		LOGGER = LoggerFactory.getLogger(HttpSoapCaller.class);
+		queryparse = new QueryParse(LOGGER);
 		init(properties);
-	}
-	
-	/**
-	 * 加载查询结果参数解析配置到内存中
-	 * @param path
-	 */
-	@SuppressWarnings("unchecked")
-	private void loadQueryParam(String path){
-		File f = new File(path);
-		if(!f.exists()){
-			LOGGER.info("query_param file {} not found ", path);
-			return;
-		}
-		Yaml y = new Yaml();
-		Map m = null;
-		try {
-			m = (Map)y.load(new FileInputStream(path));
-		} catch (FileNotFoundException e) {
-			LOGGER.error("load query param file failed:"+path, e);
-			return;
-		}
-		for(Object o: m.keySet()){
-			String key = (String)o;
-			if(key.startsWith("QP"))
-				addQP(key, m.get(key));
-		}
-		LOGGER.info("query_param {} loaded,  size: {}", path, queryparams.size());
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void addQP(String key, Object value) {
-		key = key.substring(2);
-		List<QueryItem> l = new ArrayList<QueryItem>();
-		if(value instanceof List){
-			for(String s: (List<String>)value){
-				int p = s.indexOf('=');
-				String varname = s.substring(0,p);
-				String varvalue = s.substring(p+1);
-				if("query_order".equals(varname)){
-					queryorders.put(key, varvalue); //query_order 保存对应的查询指令代码
-				}else{
-					l.add(new QueryItem(varname, Pattern.compile(varvalue)));
-				}
-				LOGGER.debug("load {} query {} = {}", new Object[]{key, s.substring(0,p), varvalue});
-			}
-		}else if(value instanceof String){
-//			LOGGER.error("invalid QP config: {}, must be a list", key);
-			String s = (String)value;
-			int p = s.indexOf('=');
-			String varname = s.substring(0,p);
-			String varvalue = s.substring(p+1);
-			l.add(new QueryItem(varname, Pattern.compile(varvalue)));
-		}
-		if(l.size() > 0 && queryorders.containsKey(key))
-			queryparams.put(key, l);
 	}
 	
 	/**
@@ -299,14 +226,13 @@ public class HttpSoapCaller {
 				orderMap.put(key, t);
 
 			}else if(key.startsWith("QP")){ //查询参数配置
-				addQP(key, m.get(key));
+				queryparse.addQP(key, m.get(key));
 			}
 		}
-		
-		if(m.containsKey("query_param")) // 仍然支持由单独的配置文件保存查询参数解析
-			loadQueryParam((String)m.get("query_param"));
+
 	}
-	
+
+	private ResultCodeParse resultcodeparse = null;
 	private void init(Properties properties) throws IOException{
 		this.properties = properties;
 		url = properties.getProperty(Constants.REMOTE_URL);
@@ -329,10 +255,8 @@ public class HttpSoapCaller {
 		}else if(orderFile.isDirectory()){ // orders in a folder as separated files
 			groupTemplate = new GroupTemplate(new FileResourceLoader(orderPath),
 				Configuration.defaultConfiguration());
-			loadQueryParam(orderPath + "/query_param.yaml");
+			//loadQueryParam(orderPath + "/query_param.yaml");
 		}
-		startTag = properties.getProperty(Constants.START_TAG_KEY, "<ResultCode>");
-		endTag = properties.getProperty(Constants.END_TAG_KEY, "</ResultCode>");
 		try {
 			timeout = Integer.parseInt(properties.getProperty(Constants.REMOTE_TIMEOUT), 60000);
 		} catch (final NumberFormatException e) {
@@ -345,10 +269,13 @@ public class HttpSoapCaller {
 		}
 
 		String resultmapfile = properties.getProperty(Constants.RESULT_MAP, "");
+		ResultCodeMap resultmap = null; //网元应答内存匹配对应返回代码的配置
 		if(!"".equals(resultmapfile)) {
+			LOGGER.info("loading resultmap file: {}", resultmapfile);
 			resultmap = new ResultCodeMap(resultmapfile);
 		}
-		
+		resultcodeparse = new ResultCodeParse(properties, resultmap, LOGGER);
+
 		/* don't use keep alive test again, use connection pool
 		final boolean httpKeepTest = Boolean.parseBoolean(properties
 				.getProperty(Constants.HTTP_KEEP_TEST));
@@ -443,7 +370,7 @@ public class HttpSoapCaller {
 	 * @param out_tpl       解析结果加到此模板中
 	 */
 	private void executeQuery(String ordercode, CmdDataAck qparam, Template out_tpl){
-		String queryOrder = queryorders.get(ordercode);
+		String queryOrder = queryparse.queryOrder(ordercode);
 		String result = null;
 		if(queryOrder != null){ //如果定义了查询指令， 则通过查询指令获得结果
 			LOGGER.debug("--query order:{} for org_order:{}", queryOrder, ordercode);
@@ -452,14 +379,15 @@ public class HttpSoapCaller {
 				LOGGER.error("--not found query order:{}", queryOrder);
 				return;
 			}
-			if(addProp != null)
-				template.binding(addProp);
-			template.binding("phoneNo", qparam.phone_no);
-			template.binding("imsi",    qparam.imsi_no);
-			template.binding("ssInfo1", qparam.ss_info1);
-			template.binding("ssInfo2", qparam.ss_info2);
-			template.binding("ssInfo3", qparam.ss_info3);
-			String cmdstr = template.render();
+			String cmdstr = qparam.render(template, addProp);
+//			if(addProp != null)
+//				template.binding(addProp);
+//			template.binding("phoneNo", qparam.phone_no);
+//			template.binding("imsi",    qparam.imsi_no);
+//			template.binding("ssInfo1", qparam.ss_info1);
+//			template.binding("ssInfo2", qparam.ss_info2);
+//			template.binding("ssInfo3", qparam.ss_info3);
+//			String cmdstr = template.render();
 			result = retry(cmdstr, retryCount);
 			if(result == null || result.length() < 20){
 				LOGGER.error("query order {} failed: {}", queryOrder, result);
@@ -468,20 +396,8 @@ public class HttpSoapCaller {
 		}else{ //否则从上次的结果中获取
 			result = last_reply;
 		}
-		
-		// 从查询指令的结果中解析参数出来， 传入到out_tpl中
-		for(QueryItem q: queryparams.get(ordercode)){
-				Matcher matcher = q.pattern.matcher(result);
-				String v = null;
-				if(matcher != null && matcher.find())
-					v = matcher.group(1);
-				else{
-					LOGGER.error("query param {} not found, abort command", q.name);
-					return;
-				}
-				out_tpl.binding(q.name, v);
-				LOGGER.debug("key[{}] value[{}]", q.name, v);
-			}
+
+		queryparse.parseQueryResult(ordercode, result, out_tpl, qparam);
 	}
 	
 	/**
@@ -525,7 +441,7 @@ public class HttpSoapCaller {
 		if(addProp != null)
 			template.binding(addProp);
 		
-		if(queryparams.containsKey(cmd.ordercode)  ){
+		if(queryparse.queryOrder(cmd.ordercode) != null  ){
 			// 需要使用查询指令结果来 获取参数
 			executeQuery(cmd.ordercode, cmd, template);
 		}
@@ -538,15 +454,19 @@ public class HttpSoapCaller {
 			template.binding("phoneNoDomain", ph2domain(cmd.phone_no));
 			template.binding("phoneHeadDomain", ph2domain(cmd.phone_no.substring(0, 7)));
 		}
-		template.binding("phoneNo", cmd.phone_no);
-		template.binding("imsi",    cmd.imsi_no);
-		template.binding("ssInfo1", cmd.ss_info1);
-		template.binding("ssInfo2", cmd.ss_info2);
-		template.binding("ssInfo3", cmd.ss_info3);
-		return template.render();
+		cmd.binding(template);
+
+		String ret = null;
+		try{
+			ret = template.render();
+		}catch(Exception ex){
+			LOGGER.error("order format failed", ex);
+		}
+		return ret;
 	}
 
 	public int apply(CmdDataAck cmd, CmdDataReq ret) {
+		resultDesc = null;
 		if(ptran != null)
 			ptran.tran(cmd);
 		final String data = createData(cmd);
@@ -568,35 +488,11 @@ public class HttpSoapCaller {
 	}
 	
 	private String resultDesc = null;
-	private Pattern resultDescPattern = Pattern.compile("<ResultDesc>(.+)<\\/ResultDesc>");
+
 	private int parseResultCode(String data) {
-		if(data == null)
-			return 7713;
-		if(data.length() == 4)
-			return Integer.parseInt(data);
-		if(resultmap != null) {
-			int rcode = resultmap.mapcode(data);
-			if (rcode != -1)
-				return rcode;
-		}
-		final int lIndex = data.indexOf(startTag);
-		if (lIndex != -1) {
-			final int rIndex = data.indexOf(endTag, lIndex);
-			if (rIndex != -1) {
-				final String resultCode = data.substring(lIndex + startTag.length(), rIndex);
-				try {
-					// <ResultDesc> </ResultDesc>
-					Matcher matcher = resultDescPattern.matcher(data);
-					resultDesc = null;
-					if(matcher != null && matcher.find())
-						resultDesc = matcher.group(1);
-					return Integer.parseInt(resultCode) % 10000;
-				} catch (final NumberFormatException e) {
-					return 7712;
-				}
-			}
-		}
-		return 7710;
+		int ret = resultcodeparse.parseCode(data);
+		resultDesc = resultcodeparse.getDesc();
+		return ret;
 	}
 
 	private String retry(String data, int retry, boolean logIt) {
@@ -614,7 +510,7 @@ public class HttpSoapCaller {
 			httpResponse = HttpConnectionManager.getHttpClient().execute(httpPost);
 			StatusLine sl = httpResponse.getStatusLine();
 			if(sl.getStatusCode() == 500){
-				
+				LOGGER.warn("http response: 500");
 			}else if(sl.getStatusCode() != 200){
 				LOGGER.error("order execute HTTP failed {} {} {}", new Object[]{sl.getStatusCode(), sl.getReasonPhrase(), url});
 				return "7711";
