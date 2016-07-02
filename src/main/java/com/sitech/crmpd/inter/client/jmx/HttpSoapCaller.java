@@ -149,7 +149,6 @@ public class HttpSoapCaller {
 	private Map<String, String> addProp;
 	
 	private String url = null;
-	private String last_reply; //最后一次执行指令的返回结果
 	private QueryParse queryparse ;
 	
 
@@ -164,18 +163,7 @@ public class HttpSoapCaller {
 		queryparse = new QueryParse(LOGGER);
 		init(properties);
 	}
-	
-	/**
-	 *  获取最后一次指令返回的结果
-	 * @return 
-	 */
-	public String getLastReply(){
-		return last_reply;
-	}
-	public void setLastReplay(String last_reply){
-		this.last_reply = last_reply;
-	}
-	
+
 	private long orderFileChangeTime = 0L; //这个如果>0, 则标识着需要自动检查指令文件是否更新， 更新后自动加载
 	                                 //自动加载的配置为增加属性 order_reloadable （值不检测）
 	private String orderPath;
@@ -380,21 +368,14 @@ public class HttpSoapCaller {
 				return;
 			}
 			String cmdstr = qparam.render(template, addProp);
-//			if(addProp != null)
-//				template.binding(addProp);
-//			template.binding("phoneNo", qparam.phone_no);
-//			template.binding("imsi",    qparam.imsi_no);
-//			template.binding("ssInfo1", qparam.ss_info1);
-//			template.binding("ssInfo2", qparam.ss_info2);
-//			template.binding("ssInfo3", qparam.ss_info3);
-//			String cmdstr = template.render();
+
 			result = retry(cmdstr, retryCount);
 			if(result == null || result.length() < 20){
 				LOGGER.error("query order {} failed: {}", queryOrder, result);
 				return;
 			}
-		}else{ //否则从上次的结果中获取
-			result = last_reply;
+		}else{
+			return;
 		}
 
 		queryparse.parseQueryResult(ordercode, result, out_tpl, qparam);
@@ -486,6 +467,39 @@ public class HttpSoapCaller {
 		}
 		return retn;
 	}
+
+	/**
+	 * 把apply函数分拆为两步， 以便于把中间的执行 post 操作异步放入线程池中处理
+	 * @param cmd
+	 * @param ret
+     * @return
+     */
+	public String preApply(CmdDataAck cmd, CmdDataReq ret) {
+
+		if(ptran != null)
+			ptran.tran(cmd);
+		String data = createData(cmd);
+		int retn = -1;
+		if(data == null) {
+			if(ret != null)
+				ret.retn = 1002;
+			return null; // 1002 order code not found
+		}
+		return data;
+	}
+	public int  postApply(CmdDataAck cmd, CmdDataReq ret, String result){
+        resultDesc = null;
+		int retn = parseResultCode(result);
+
+        if(ret != null){
+            ret.retn = retn;
+            ret.stream_id = cmd.stream_id;
+            ret.ordercode = cmd.ordercode;
+            ret.phone_no = cmd.phone_no;
+            ret.info = String.valueOf(resultDesc);
+        }
+        return retn;
+	}
 	
 	private String resultDesc = null;
 
@@ -522,7 +536,6 @@ public class HttpSoapCaller {
 			if (logIt) {
 				LOGGER.info("receive = [{}]", data);
 			}
-			last_reply = data;
 			return data;
 			
 		} catch (final IOException e) {

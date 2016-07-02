@@ -146,20 +146,17 @@ public abstract class BaseComm {
 								ack.ss_info1, ack.ss_info2, ack.ss_info3 });
 				req.type = CmdDataReq.REPLY_GET;
 				t1 = System.currentTimeMillis();
-//				req.retn = caller.apply(ack.ordercode, ack.phone_no, ack.imsi_no, ack.ss_info1,
-//						ack.ss_info2, ack.ss_info3);
+
 				if(groupOrders != null && groupOrders.containsKey(ack.ordercode)){ //执行接口组合指令
 					logger.debug("groups---");
 					String org_order = ack.ordercode;
 					int retn = -1;
 					for(SubOrder so:  groupOrders.get(ack.ordercode)){
 						c = callers.get(so.caller_index);
-						c.setLastReplay(last_reply);
 						ack.ordercode = so.ordercode;
 						retn = c.apply(ack, req);
 						if(retn != 0)
 							break;
-						last_reply = c.getLastReply();
 					}
 					ack.ordercode = org_order;
 					req.ordercode = org_order;
@@ -175,9 +172,7 @@ public abstract class BaseComm {
 					}else{
 						c = caller;
 					}
-					c.setLastReplay(last_reply);
 					c.apply(ack, req);
-					last_reply = c.getLastReply();
 				}
 				t2 = System.currentTimeMillis();
 				logger.info("order_time:{} tm:{}(ms) retn:{} desc:{}", new Object[] { ack.ordercode,
