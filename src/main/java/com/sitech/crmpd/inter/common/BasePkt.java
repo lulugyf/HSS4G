@@ -7,6 +7,22 @@ import java.io.OutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 报文格式:
+ * 基本通信消息格式
+struct comm_data
+		{
+		char				flag[4];			// `CD'
+		char				msglen[4];			// 消息总长度（含消息头）
+		char				srvtype[8];			// 业务类型
+		char				transid[8];			// 事务ID（唯一标识）
+		char				finished;			// 事务结束标志
+		char				msgtype;			// REQ & ACK
+		char				encrypt;			// 加密类型
+		char				reserve[5];			// 保留
+		char				data[10000];		// 业务数据
+		};
+ */
 public class BasePkt {
 	private static Logger logger = LoggerFactory.getLogger(BasePkt.class);
 	protected static int header_len = 32;
@@ -15,7 +31,7 @@ public class BasePkt {
 	private static char pseudo[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B',
 		'C', 'D', 'E', 'F' };
 
-	// 983 6 -> 000983
+	// 983, 6 -> 000983
 	public static int int2ba(int num, int len, byte[] buf, int offset) {
 		int k;
 		for (int i = 0; i < len; i++) {
@@ -61,8 +77,8 @@ public class BasePkt {
 	public static int read_pkt(InputStream pin, byte[] buf) throws IOException {
 		int msglen;
 		int ret;
-		msglen = pin.read(buf, 0, header_len);
-		if (msglen != header_len) {
+		ret = pin.read(buf, 0, header_len);
+		if (ret != header_len) {
 			return -1;
 		}
 		msglen = ba2int(buf, 4, 4);
@@ -73,7 +89,7 @@ public class BasePkt {
 		if (ret != msglen - header_len) {
 			return -2;
 		}
-		logger.debug("read from manager: [{}]", new String(buf, header_len, ret));
+		logger.debug("read from manager: [{}]", new String(buf, 0, msglen));
 		return msglen;
 	}
 
@@ -83,7 +99,7 @@ public class BasePkt {
 			System.out.println("invalid pkt, len:" + msglen);
 			return -1;
 		}
-		logger.trace("write [{}]", new String(buf), msglen);
+		logger.debug("write to manager [{}]", new String(buf, 0, msglen));
 		pout.write(buf, 0, msglen);
 		pout.flush();
 		return msglen;

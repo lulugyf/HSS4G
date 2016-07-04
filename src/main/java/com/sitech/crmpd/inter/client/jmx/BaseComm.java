@@ -32,8 +32,7 @@ public abstract class BaseComm {
 	private boolean running;
 	
 	private List<HttpSoapCaller> callers = null; //多端口执行指令
-	private Map<String, Integer> order2caller = null;  //保存ordercode 对应哪个一个caller
-	private Map<String, List<SubOrder>> groupOrders = null; //多端口指令组合
+	private Map<String, Integer> order2caller = null;  //保存ordercode 对应哪个caller
 
 	public void setProps(Properties properties){ this.properties = properties; }
 	public void setCaller(HttpSoapCaller c){ this.caller = c; }
@@ -49,44 +48,6 @@ public abstract class BaseComm {
 			callers.add(caller);
 		}
 		callers.add(c);
-	}
-	
-	/**
-	8001:
-      - s8002 0
-      - s8003 1
-      - s8004 2
-    8002: s8005 0
-	 * @param m
-	 */
-	public void setOrderGroups(Map m){
-		groupOrders = new HashMap<String, List<SubOrder>>();
-		for(Object o: m.keySet()){
-			if(! (o instanceof String))
-				continue;
-			String k = (String)o;
-			o = m.get(o);
-			List<SubOrder> s = new ArrayList<SubOrder>();
-			if(o instanceof String){
-				String v = (String)o;
-				String[] vs = v.trim().split("\\ +");
-				if(vs.length < 2)
-					continue;
-				s.add(new SubOrder(vs[0], Integer.parseInt(vs[1])));
-			}else if(o instanceof List){
-				for(Object ol: (List)o){
-					if(ol instanceof String){
-						String v = (String)ol;
-						String[] vs = v.trim().split("\\ +");
-						if(vs.length < 2)
-							continue;
-						s.add(new SubOrder(vs[0], Integer.parseInt(vs[1])));						
-					}
-				}
-			}
-			groupOrders.put(k, s);
-		}
-
 	}
 
 	protected abstract boolean connect() ;
@@ -125,7 +86,7 @@ public abstract class BaseComm {
 		int ret;
 		long t1, t2;
 		running = true;
-		String last_reply = null;
+
 		HttpSoapCaller c = null;
 		while (running) {
 			ret = getOrder(req, ack);
@@ -134,7 +95,7 @@ public abstract class BaseComm {
 				break;
 			}
 			if (ack.retn == 3001) {
-				logger.warn("no data, sleep 5s");
+				logger.debug("no data, sleep 5s");
 				try {
 					Thread.sleep(5000L);
 				} catch (final Exception ex) {}
@@ -147,33 +108,18 @@ public abstract class BaseComm {
 				req.type = CmdDataReq.REPLY_GET;
 				t1 = System.currentTimeMillis();
 
-				if(groupOrders != null && groupOrders.containsKey(ack.ordercode)){ //执行接口组合指令
-					logger.debug("groups---");
-					String org_order = ack.ordercode;
-					int retn = -1;
-					for(SubOrder so:  groupOrders.get(ack.ordercode)){
-						c = callers.get(so.caller_index);
-						ack.ordercode = so.ordercode;
-						retn = c.apply(ack, req);
-						if(retn != 0)
-							break;
-					}
-					ack.ordercode = org_order;
-					req.ordercode = org_order;
-					req.retn = retn;
-				}else{
-					logger.debug("--default caller");
-					if(callers != null){
-						Integer i = order2caller.get(ack.ordercode);
-						if(i != null )
-							c = callers.get(i);
-						else
-							c = caller;
-					}else{
+
+				if(callers != null){
+					Integer i = order2caller.get(ack.ordercode);
+					if(i != null )
+						c = callers.get(i);
+					else
 						c = caller;
-					}
-					c.apply(ack, req);
+				}else{
+					c = caller;
 				}
+				c.apply(ack, req);
+
 				t2 = System.currentTimeMillis();
 				logger.info("order_time:{} tm:{}(ms) retn:{} desc:{}", new Object[] { ack.ordercode,
 						t2 - t1, req.retn, req.info});
@@ -182,17 +128,6 @@ public abstract class BaseComm {
 		close();
 		running = false;
 		logger.info("worker thread ended!!");
-	}
-	
-	
-	
-	static class SubOrder{
-		public String ordercode;
-		public int caller_index;
-		public SubOrder(String oc, int ci){
-			ordercode = oc;
-			caller_index = ci;
-		}
 	}
 
 }

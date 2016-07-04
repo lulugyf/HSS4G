@@ -170,4 +170,56 @@ public class Communication {
 		running = false;
 	}
 
+	public static void main(String[] args) throws Exception {
+		Communication c = new Communication(null, null);
+
+		//connect(String ip, int port, String user, String pwd, String hlrcode,
+			//String hlrport, String termtype)
+		boolean r = c.connect("127.0.0.1", 22109, "hlrhei", "hlrhei", "hei", "1", "1");
+		if(!r){
+			c.logger.error("failed");
+			c.close();
+			return;
+		}
+
+		final CmdDataReq req = new CmdDataReq();
+		final CmdDataAck ack = new CmdDataAck();
+		final byte[] buf = new byte[2048];
+		req.type = CmdDataReq.ONELY_GET;
+		int ret;
+		long t1, t2;
+
+		while (true) {
+			ret = c.getOrder(buf, req, ack);
+			if (ret <= 0) {
+				c.logger.warn("getOrder failed[{}], break", ret);
+				break;
+			}
+			if (ack.retn == 3001) {
+				c.logger.warn("no data, sleep 5s");
+				try {
+					Thread.sleep(5000L);
+				} catch (final Exception ex) {}
+				req.type = CmdDataReq.ONELY_GET;
+			} else {
+				c.logger.info(
+						"order to exec: ordercode[{}]stream_id[{}]phone[{}]imsi[{}]info1[{}]info2[{}]info3[{}]",
+						new Object[] { ack.ordercode, ack.stream_id, ack.phone_no, ack.imsi_no,
+								ack.ss_info1, ack.ss_info2, ack.ss_info3 });
+				req.type = CmdDataReq.REPLY_GET;
+
+				req.retn = 0;
+				req.stream_id = ack.stream_id;
+				req.ordercode = ack.ordercode;
+				req.phone_no = ack.phone_no;
+				req.info = "success";
+			}
+		}
+		c.close();
+
+
+
+
+	}
+
 }

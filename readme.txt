@@ -260,3 +260,14 @@ OPt0005.3: 3
     return.code.pattern: "<ResultCode>(.+)<\/ResultCode>"
     另外增加了对返回描述的匹配处理(这个是以failover的模式处理的，第一个匹配不到则匹配第二个, 中间以;分隔)：
     return.desc.pattern: "<ResultDesc>(.+)<\/ResultDesc>;<faultstring>(.+)</faultstring>"
+
+17. 移除查询指令通过依赖上一个order的结果来解析的功能
+    这个之前在优化查询后执行指令的时候已经把功能废掉不能用了， 且这个功能在表述上也存在不明确的含义， 容易误解或者配置错误
+
+18. 移除指令组合配置功能
+    这个功能之前是准备用于一个ordercode对应多条不同网元的指令， 但这个在 offon_manager的ccmdtorder配置中已经有了， 属于重复
+     的功能， 也增加了指令执行模块的复杂度
+
+19. 添加线程池来执行http post的功能
+    现有的开关机应用结构中， 通过在manager上连接多个 port 进程来增加指令执行的并发性， 但实际上通过测试发现， manager是可以
+        对同一个port提供多个指令以并发执行的

@@ -53,7 +53,7 @@ public class HLRPort extends Thread{
 	
 	public static boolean readCfg(String etcdir, String hlrcode, String hlrport, Properties p){
 		Map<String, Properties> callers = new HashMap<String, Properties>();
-		return readCfg(etcdir, hlrcode, hlrport, p, callers, null);
+		return readCfg(etcdir, hlrcode, hlrport, p, callers);
 	}
 	
 	/**
@@ -66,7 +66,7 @@ public class HLRPort extends Thread{
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static boolean readCfg(String conf, String hlrcode, String hlrport, Properties p,
-			Map<String, Properties> callers, Map ordergroups){
+			Map<String, Properties> callers){
 		Yaml y = new Yaml();
 		Map m = null;
 		try {
@@ -121,9 +121,6 @@ public class HLRPort extends Thread{
 				p.setProperty(String.valueOf(k), String.valueOf(v));
 			}
 		}
-		
-		if(ordergroups != null && m1.containsKey("group.orders"))
-			ordergroups.putAll((Map)m1.get("group.orders"));
 		
 		p.setProperty(Constants.HLRCODE, hlrcode);
 		p.setProperty(Constants.HLRPORT, hlrport);
@@ -184,8 +181,7 @@ public class HLRPort extends Thread{
 			final Properties properties = new Properties();
 
 			Map<String, Properties> callers = new HashMap<String, Properties>();
-			Map ordergroups = new HashMap();
-			if(!readCfg(conf, hlrcode, hlrport, properties, callers, ordergroups)){
+			if(!readCfg(conf, hlrcode, hlrport, properties, callers)){
 				logger.error("readCfg failed");
 				return;
 			}
@@ -220,9 +216,7 @@ public class HLRPort extends Thread{
 					}
 				}
 			}
-			if(ordergroups.size() > 0){ //设置接口指令分解数据
-				com.setOrderGroups(ordergroups);
-			}
+
 			com.for_ever(); // 进入主循环
 		}finally{
 			if(!handmode){
