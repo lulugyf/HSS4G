@@ -51,7 +51,7 @@ public class HLRPort extends Thread{
 		com = new ManagerComm();
 	}
 	
-	public static boolean readCfg(String etcdir, String hlrcode, String hlrport, Properties p){
+	public  boolean readCfg(String etcdir, String hlrcode, String hlrport, Properties p){
 		Map<String, Properties> callers = new HashMap<String, Properties>();
 		return readCfg(etcdir, hlrcode, hlrport, p, callers);
 	}
@@ -65,27 +65,32 @@ public class HLRPort extends Thread{
 	 * @return
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static boolean readCfg(String conf, String hlrcode, String hlrport, Properties p,
+	public  boolean readCfg(String conf, String hlrcode, String hlrport, Properties p,
 			Map<String, Properties> callers){
 		Yaml y = new Yaml();
 		Map m = null;
 		try {
 			m = (Map)y.load(new FileInputStream(new File(conf)));
 		} catch (FileNotFoundException e) {
+			logger.error("conf file {} not found", conf);
 			return false;
 		}
 		Object o = m.get(String.format("%s.%s", hlrcode, hlrport));
-		if(o == null)
+		if(o == null) {
+			logger.error("hlr port {}:{} config not found", hlrcode, hlrport);
 			return false;
+		}
 		if(o instanceof String){
 			//这里允许使用应用， 比如 hf1.2 的配置与 hf1.1 的相同， 则配置为：
 			// hf1.2: hf1.1
 			o = m.get(o);
-			if(o == null)
+			if(o == null) {
+				logger.error("reference config {} not found", o);
 				return false;
+			}
 		}
 		if(!(o instanceof Map)){
-//			logger.error("can not load hlrport config {}.{}", hlrcode, hlrport);
+			logger.error("can not load hlrport config {}.{}", hlrcode, hlrport);
 			return false;
 		}
 		Map m1 = (Map)o;
