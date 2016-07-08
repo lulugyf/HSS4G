@@ -158,6 +158,10 @@ public class HttpSoapCaller {
 		init(properties);
 	}
 
+	public String getUrl() {
+		return url;
+	}
+
 	HttpSoapCaller(Properties properties) throws IOException {
 		LOGGER = LoggerFactory.getLogger(HttpSoapCaller.class);
 		queryparse = new QueryParse(LOGGER);

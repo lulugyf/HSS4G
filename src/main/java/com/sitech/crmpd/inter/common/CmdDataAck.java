@@ -5,23 +5,23 @@ import org.beetl.core.Template;
 import java.util.Map;
 
 public class CmdDataAck extends BasePkt {
-	public static String ack_type = "";
+	//final private static String ack_type = "";
 	public int retn; /* 返回代码 */
-	public static int len_retn = 4;
+	final private static int len_retn = 4;
 	public String stream_id; /* 操作流水，业务命令的唯一标识 */
-	public static int len_stream_id = 16;
+	final private static int len_stream_id = 16;
 	public String ordercode; /* 指令代码 */
-	public static int len_ordercode = 4;
+	final private static int len_ordercode = 4;
 	public String phone_no; /* 移动电话号码 */
-	public static int len_phone_no = 16;
+	final private static int len_phone_no = 16;
 	public String imsi_no; /* IMSI号码 */
-	public static int len_imsi_no = 21;
+	final private static int len_imsi_no = 21;
 	public String ss_info1; /* 补充信息1 */
-	public static int len_ss_info1 = 16;
+	final private static int len_ss_info1 = 16;
 	public String ss_info2; /* 补充信息2 */
-	public static int len_ss_info2 = 21;
+	final private static int len_ss_info2 = 21;
 	public String ss_info3; /* 补充信息3 */
-	public static int len_ss_info3 = 121;
+	final private static int len_ss_info3 = 121;
 
 	private String getString(byte[] buf, int offset, int len) {
 		int pos;
@@ -71,5 +71,16 @@ public class CmdDataAck extends BasePkt {
 		template.binding("ssInfo1", this.ss_info1);
 		template.binding("ssInfo2", this.ss_info2);
 		template.binding("ssInfo3", this.ss_info3);
+	}
+
+	public CmdDataAck clone() {
+		CmdDataAck c = new CmdDataAck();
+		c.ordercode = ordercode;
+		c.phone_no = phone_no;
+		c.imsi_no = imsi_no;
+		c.ss_info1 = ss_info1;
+		c.ss_info2 = ss_info2;
+		c.ss_info3 = ss_info3;
+		return c;
 	}
 }

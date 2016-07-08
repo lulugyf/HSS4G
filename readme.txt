@@ -271,3 +271,11 @@ OPt0005.3: 3
 19. 添加线程池来执行http post的功能
     现有的开关机应用结构中， 通过在manager上连接多个 port 进程来增加指令执行的并发性， 但实际上通过测试发现， manager是可以
         对同一个port提供多个指令以并发执行的
+    线程池配置， 在 hss.yaml中(配置中的数字为默认值) 如下：
+threadPool:
+  corePoolSize: 20
+  maxPoolSize: 200
+  idleTimeSeconds: 20
+  poolQueueSize: 50
+
+  开启使用线程池的开关在 <hlrcode>.<hlrport> 的配置中， 增加 maxExecutor: <n>

@@ -35,6 +35,7 @@ public class HLRPort extends Thread{
 	private BaseComm com;
 	private Logger logger;
 	private boolean handmode = false;
+	private int maxExecutor = -1;
 
 	private static Object mutex = new Object();
 
@@ -51,10 +52,7 @@ public class HLRPort extends Thread{
 		com = new ManagerComm();
 	}
 	
-	public  boolean readCfg(String etcdir, String hlrcode, String hlrport, Properties p){
-		Map<String, Properties> callers = new HashMap<String, Properties>();
-		return readCfg(etcdir, hlrcode, hlrport, p, callers);
-	}
+
 	
 	/**
 	 * 读取yaml格式的hss配置文件
@@ -75,7 +73,7 @@ public class HLRPort extends Thread{
 			logger.error("conf file {} not found", conf);
 			return false;
 		}
-		Object o = m.get(String.format("%s.%s", hlrcode, hlrport));
+		Object o = m.get(hlrcode+"."+hlrport );
 		if(o == null) {
 			logger.error("hlr port {}:{} config not found", hlrcode, hlrport);
 			return false;
@@ -129,6 +127,10 @@ public class HLRPort extends Thread{
 		
 		p.setProperty(Constants.HLRCODE, hlrcode);
 		p.setProperty(Constants.HLRPORT, hlrport);
+
+		if(p.containsKey("maxExecutor")){
+			maxExecutor = Integer.parseInt(p.getProperty("maxExecutor"));
+		}
 		return true;
 	}
 
@@ -222,7 +224,11 @@ public class HLRPort extends Thread{
 				}
 			}
 
-			com.for_ever(); // 进入主循环
+			// 进入主循环
+			if(maxExecutor > 0)
+				com.for_ever(maxExecutor);
+			else
+				com.for_ever();
 		}finally{
 			if(!handmode){
 //				MDC.remove("hlrterm");
