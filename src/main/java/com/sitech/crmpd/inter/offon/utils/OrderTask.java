@@ -1,14 +1,14 @@
-package com.sitech.crmpd.inter.client.jmx.func;
+package com.sitech.crmpd.inter.offon.utils;
 
-import com.sitech.crmpd.inter.client.jmx.HttpSoapCaller;
-import com.sitech.crmpd.inter.common.CmdDataAck;
-import com.sitech.crmpd.inter.common.CmdDataReq;
+import com.sitech.crmpd.inter.offon.exec.BasePort;
+import com.sitech.crmpd.inter.offon.mgr.CmdDataAck;
+import com.sitech.crmpd.inter.offon.mgr.CmdDataReq;
 import org.slf4j.Logger;
 
 /**
  * Created by guanyf on 2016/7/6.
  */
-public class TaskObj {
+public class OrderTask {
     public String stream_id;
     public String phone_no;
     public String ordercode;
@@ -19,7 +19,7 @@ public class TaskObj {
     public long t1;
     public boolean isQuery = false; //是否查询指令
     public CmdDataAck cmd; // 对于查询指令， 需要保存原指令
-    public HttpSoapCaller c;
+    public BasePort.NetworkEntity c;
 
     public void toReq(CmdDataReq req) {
         req.stream_id = stream_id;

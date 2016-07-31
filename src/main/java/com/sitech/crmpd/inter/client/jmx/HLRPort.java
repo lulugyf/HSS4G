@@ -225,9 +225,9 @@ public class HLRPort extends Thread{
 			}
 
 			// 进入主循环
-			if(maxExecutor > 0)
+			/*if(maxExecutor > 0)
 				com.for_ever(maxExecutor);
-			else
+			else */
 				com.for_ever();
 		}finally{
 			if(!handmode){

@@ -1,4 +1,4 @@
-package com.sitech.crmpd.inter.common;
+package com.sitech.crmpd.inter.offon.mgr;
 
 import org.beetl.core.Template;
 

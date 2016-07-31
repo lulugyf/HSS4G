@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import com.sitech.crmpd.inter.client.jmx.func.QueryParse;
 import com.sitech.crmpd.inter.client.jmx.func.ResultCodeMap;
 import com.sitech.crmpd.inter.client.jmx.func.ResultCodeParse;
+import com.sitech.crmpd.inter.client.jmx.func.TaskObj;
 import org.apache.http.Consts;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -268,7 +269,7 @@ public class HttpSoapCaller {
 		}
 		resultcodeparse = new ResultCodeParse(properties, resultmap, LOGGER);
 
-		/* don't use keep alive test again, use connection pool
+		/* don'task use keep alive test again, use connection pool
 		final boolean httpKeepTest = Boolean.parseBoolean(properties
 				.getProperty(Constants.HTTP_KEEP_TEST));
 		CmdDataAck cmd = new CmdDataAck();
@@ -326,7 +327,6 @@ public class HttpSoapCaller {
 	public void setTran(ParamTran t){
 		this.ptran = t;
 	}
-	
 
 
 	public String cmStats() {
@@ -355,6 +355,36 @@ public class HttpSoapCaller {
 //		final String data = createData(orderCode, phoneNo, imsi, ssInfo1, ssInfo2, ssInfo3);
 //		return retry(data, retryCount);
 //	}
+
+	/**
+	 * 删除结果串中的某个namespace, 以便做结果匹配， 如  xmlns:m="http://www.chinamobile.com/IMS/VoLTEAS/"
+	 *      <m:ResultCode>0</m:ResultCode>  ==>  <ResultCode>0</ResultCode>
+	 * @param result
+	 * @return
+	 */
+	private String removeNS(String result){ //, String ns){
+//		String regstr = "xmlns:(\\w+)=\\\""+ns+"\\\"";
+//		Pattern pattern = Pattern.compile(regstr);
+		Matcher matcher = ns2rmv.matcher(result);
+		String m = null;
+		if(matcher != null && matcher.find()){
+			m = matcher.group(1);
+		}else{
+			return result;
+		}
+		
+		String s = result.replaceAll("<"+m+"\\:", "<");
+		s = s.replaceAll("</"+m+"\\:", "<");
+		return s;
+	}
+	
+	private String ph2domain(String s){
+		StringBuffer b = new StringBuffer();
+		for(int i=s.length(); i>0; i--)
+			b.append(s.charAt(i-1)).append('.');
+		return b.toString();
+	}
+
 	/**
 	 * 执行查询指令， 并解析结果到 out_tpl 中
 	 * @param ordercode  原指令代码
@@ -383,35 +413,6 @@ public class HttpSoapCaller {
 		}
 
 		queryparse.parseQueryResult(ordercode, result, out_tpl, qparam);
-	}
-	
-	/**
-	 * 删除结果串中的某个namespace, 以便做结果匹配， 如  xmlns:m="http://www.chinamobile.com/IMS/VoLTEAS/"
-	 *      <m:ResultCode>0</m:ResultCode>  ==>  <ResultCode>0</ResultCode>
-	 * @param result
-	 * @return
-	 */
-	private String removeNS(String result){ //, String ns){
-//		String regstr = "xmlns:(\\w+)=\\\""+ns+"\\\"";
-//		Pattern pattern = Pattern.compile(regstr);
-		Matcher matcher = ns2rmv.matcher(result);
-		String m = null;
-		if(matcher != null && matcher.find()){
-			m = matcher.group(1);
-		}else{
-			return result;
-		}
-		
-		String s = result.replaceAll("<"+m+"\\:", "<");
-		s = s.replaceAll("</"+m+"\\:", "<");
-		return s;
-	}
-	
-	private String ph2domain(String s){
-		StringBuffer b = new StringBuffer();
-		for(int i=s.length(); i>0; i--)
-			b.append(s.charAt(i-1)).append('.');
-		return b.toString();
 	}
 
 	/**
@@ -449,47 +450,51 @@ public class HttpSoapCaller {
 		}
 		return ret;
 	}
-
-	public int apply(CmdDataAck cmd, CmdDataReq ret) {
-		resultDesc = null;
-		if(ptran != null)
-			ptran.tran(cmd);
-		final String data = createData(cmd);
-		int retn = -1;
-		if(data == null)
-			retn = 1002;
-		else{
-			String result = retry(data, retryCount);
-			retn = parseResultCode(result);
-		}
-		if(ret != null){
-			ret.retn = retn;
-			ret.stream_id = cmd.stream_id;
-			ret.ordercode = cmd.ordercode;
-			ret.phone_no = cmd.phone_no;
-			ret.info = String.valueOf(resultDesc);
-		}
-		return retn;
-	}
-
 	/**
 	 * 把apply函数分拆为两步， 以便于把中间的执行 post 操作异步放入线程池中处理
 	 * @param cmd
 	 * @param ret
      * @return
      */
-	public String preApply(CmdDataAck cmd, CmdDataReq ret) {
+	public void preApply(CmdDataAck cmd, CmdDataReq ret, TaskObj obj) {
 
 		if(ptran != null)
 			ptran.tran(cmd);
-		String data = createData(cmd);
-		int retn = -1;
-		if(data == null) {
-			if(ret != null)
-				ret.retn = 1002;
-			return null; // 1002 order code not found
+
+		String queryOrder = queryparse.queryOrder(cmd.ordercode);
+		if(queryOrder != null) { //如果定义了查询指令， 则通过查询指令获得结果
+			LOGGER.debug("--query order:{} for org_order:{}", queryOrder, cmd.ordercode);
+			Template template = findTemplate(queryOrder);
+			if (template == null) {
+				LOGGER.error("--not found query order:{}", queryOrder);
+				return;
+			}
+			obj.request_str = cmd.render(template, addProp);
+			obj.isQuery = true;
+			obj.cmd = cmd.clone();
+			return;
 		}
-		return data;
+
+		// 非查询指令， 生成请求报文
+		if(IPHEX_TO_INT!=null && IPHEX_TO_INT.contains(cmd.ordercode)){
+			final String intIP = IP_HEX_to_INT(cmd.ss_info2);
+			cmd.ss_info2=intIP;
+		}
+		Template template = findTemplate(cmd.ordercode);
+		if(template == null ) {
+			obj.request_str = null;
+			return;
+		}
+		if(orderMap.containsKey("__enum__")){
+			// 对于enum指令， 需要对手机号码做域名转换
+			template.binding("phoneNoDomain", ph2domain(cmd.phone_no));
+			template.binding("phoneHeadDomain", ph2domain(cmd.phone_no.substring(0, 7)));
+		}
+		if(addProp != null)
+			template.binding(addProp);
+		cmd.binding(template);
+
+		obj.request_str = template.render();
 	}
 	public int  postApply(CmdDataAck cmd, CmdDataReq ret, String result){
         resultDesc = null;
@@ -511,6 +516,29 @@ public class HttpSoapCaller {
 		int ret = resultcodeparse.parseCode(data);
 		resultDesc = resultcodeparse.getDesc();
 		return ret;
+	}
+
+
+	public int apply(CmdDataAck cmd, CmdDataReq ret) {
+		resultDesc = null;
+		if(ptran != null)
+			ptran.tran(cmd);
+		final String data = createData(cmd);
+		int retn = -1;
+		if(data == null)
+			retn = 1002;
+		else{
+			String result = retry(data, retryCount);
+			retn = parseResultCode(result);
+		}
+		if(ret != null){
+			ret.retn = retn;
+			ret.stream_id = cmd.stream_id;
+			ret.ordercode = cmd.ordercode;
+			ret.phone_no = cmd.phone_no;
+			ret.info = String.valueOf(resultDesc);
+		}
+		return retn;
 	}
 
 	private String retry(String data, int retry, boolean logIt) {

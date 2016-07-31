@@ -134,7 +134,7 @@ public abstract class BaseComm {
 		logger.info("worker thread ended!!");
 	}
 
-	public void for_ever(int maxExecutor) {
+	/*public void for_ever(int maxExecutor) {
 		if (!connect()) {
 			logger.warn("can not connect to manager");
 			return;
@@ -172,11 +172,12 @@ public abstract class BaseComm {
 			// 2. try to parse reply str
 			if(obj == null){
 				if(curExecutor >= maxExecutor)
-					continue; // if exeed maxExecutor, don't get more command
+					continue; // if exeed maxExecutor, don'task get more command
 				req.type = CmdDataReq.ONELY_GET;
 			}else{
 				curExecutor --;
 				req.type = CmdDataReq.REPLY_GET;
+				obj.toReq(req);
 				obj.c.postApply(ack, req, obj.response_str);
 				t2 = System.currentTimeMillis();
 				logger.info("order_time:{} tm:{}(ms) retn:{} desc:{}", new Object[] { obj.ordercode,
@@ -204,7 +205,7 @@ public abstract class BaseComm {
 					"order to exec: ordercode[{}]stream_id[{}]phone[{}]imsi[{}]info1[{}]info2[{}]info3[{}]",
 					new Object[] { ack.ordercode, ack.stream_id, ack.phone_no, ack.imsi_no,
 							ack.ss_info1, ack.ss_info2, ack.ss_info3 });
-			if(callers != null){
+			if(callers != null){ //多个网元
 				Integer i = order2caller.get(ack.ordercode);
 				if(i != null )
 					c = callers.get(i);
@@ -220,10 +221,8 @@ public abstract class BaseComm {
 				obj.logger = logger;
 			}
 			obj.c = c;
-			obj.request_str = c.preApply(ack, req);
-			obj.ordercode = ack.ordercode;
-			obj.url = c.getUrl();
-			obj.t1 = System.currentTimeMillis();
+			obj.fromAck(ack);
+			c.preApply(ack, req, obj); //准备执行的请求报文， 如果有查询依赖，则查询指令在函数中阻塞执行
 			if(obj.request_str == null) {
 				// order code not found, do not push a task to thread pool
 				obj.response_str = "1002";
@@ -234,12 +233,13 @@ public abstract class BaseComm {
 				}
 				continue;
 			}
+			obj.url = c.getUrl();
 
 			poolExecutor.execute(obj, replyQ);
 		}
 		close();
 		running = false;
 		logger.info("worker thread ended!!");
-	}
+	} */
 
 }
