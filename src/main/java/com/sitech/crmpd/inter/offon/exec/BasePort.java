@@ -67,7 +67,7 @@ public abstract class BasePort {
     protected ConfigureManager cm;
     protected String basePath;
     protected Map conf;
-    private int maxExec = 1; //可以并行执行的指令数， 默认为1
+    protected int maxExec = 1; //可以并行执行的指令数， 默认为1
 
     protected BasePort(String basePath, String portname, Map conf, ConfigureManager cm) {
         this.cm = cm;
@@ -76,7 +76,7 @@ public abstract class BasePort {
         this.basePath = basePath;
     }
 
-    public void initOrderConf(Logger log) {
+    public boolean initOrderConf(Logger log) {
         String ip_hex2int = null;
         if(conf.containsKey("IPHEX_TO_INT"))
             ip_hex2int = (String)conf.get("IPHEX_TO_INT");
@@ -86,6 +86,9 @@ public abstract class BasePort {
         orderPrepare = new OrderPrepare(apnorders, ip_hex2int);
 
         NetworkEntity c = genNE("__caller.0", basePath, conf, log);
+        if(c == null){
+            return false;
+        }
         for(String ordercode: c.ordercfg.ordercodes()){
             orders.put(ordercode, c);
         }
@@ -94,6 +97,8 @@ public abstract class BasePort {
             Object v = conf.get(o);
             if(key.startsWith("caller.") && v instanceof  Map){
                 c = genNE(key, basePath, (Map)v, log);
+                if(c == null)
+                    return false;
                 for(String ordercode: c.ordercfg.ordercodes()){
                     orders.put(ordercode, c);
                 }
@@ -102,6 +107,7 @@ public abstract class BasePort {
         if(conf.containsKey("execute.max")) {
             maxExec = (Integer)conf.get("execute.max");
         }
+        return true;
     }
 
     private NetworkEntity genNE(String name, String basePath, Map conf, Logger log) {
@@ -123,7 +129,12 @@ public abstract class BasePort {
                     .withKeyValueSeparator('=');
             prop_str = (String)conf.get("PROPERTIES");
         }
-        return new NetworkEntity(name, url, oc, codePattern, descPattern, resultMap, prop_str);
+        HttpExecutor executor = cm.getExecutor(url);
+        if(executor == null){
+            log.error("Can not found http executor for {}", url);
+            return null;
+        }
+        return new NetworkEntity(name, url, oc, codePattern, descPattern, resultMap, prop_str, executor);
     }
 
     private void exec(CmdDataAck cmd, OrderTask task, ArrayBlockingQueue<OrderTask> q) {
@@ -157,7 +168,7 @@ public abstract class BasePort {
         private HttpExecutor executor;
 
         protected NetworkEntity(String name, String url, OrderConfigure ordercfg, String codepattern,
-                                String descpattern, String resultcodemap, String prop_str) {
+                                String descpattern, String resultcodemap, String prop_str, HttpExecutor executor) {
             this.name = name;
             this.url = url;
             this.ordercfg = ordercfg;
@@ -177,7 +188,7 @@ public abstract class BasePort {
                     .withKeyValueSeparator('=');
             props = splitter.split(prop_str);
 
-            executor = HttpExecutor.getInstance(url);
+            this.executor = executor;
         }
 
         void exec(CmdDataAck cmd, OrderTask task, ArrayBlockingQueue<OrderTask> q){

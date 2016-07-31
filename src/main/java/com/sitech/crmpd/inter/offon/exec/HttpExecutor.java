@@ -34,68 +34,64 @@ import java.util.concurrent.*;
 /**
  * http执行线程池
  *
- * 配置文件格式：
- * pool.1:
- *   coreSize: 10
- *   maxSize: 50
- *   idleTimeSeconds: 120
- *   queueSize: 50
+ * 配置文件格式(其中 _default_pool_conf_ 为默认配置， 不在配置文件中的url使用此配置)：
+pool.1:
+  coreSize: 10
+  maxSize: 50
+  idleTimeSeconds: 120
+  queueSize: 50
+
+  url: http://?????
+  socketTimeoutSeconds: 60
+  timeToLiveSeconds: 120
+pool.2:
+  ...
+_default_pool_conf_:
+  coreSize: 1
+  maxSize: 20
+  idleTimeSeconds: 120
+  queueSize: 50
+  socketTimeoutSeconds: 60
+  timeToLiveSeconds: 120
+
  *
- *   url: http://?????
- *   socketTimeoutSeconds: 60
- *   timeToLiveSeconds: 120
- * pool.2:
- *   ...
  */
 public class HttpExecutor {
     private ThreadPoolExecutor executorPool;
 
-    private static HttpExecutor executor = null;
-    private static ConcurrentHashMap<String, HttpExecutor> executors = new ConcurrentHashMap<String, HttpExecutor>();
     final private ContentType TEXT_XML = ContentType.create("text/xml", Consts.UTF_8);
 
+    protected HttpExecutor(Map m1) {
 
-    public static HttpExecutor getInstance(String url) {
-        return executors.get(url);
+        int corePoolSize = (Integer)m1.get("coreSize");
+        int maxPoolSize = (Integer)m1.get("maxSize");
+        int idleTimeSeconds = (Integer)m1.get("idleTimeSeconds");
+        int poolQueueSize = (Integer)m1.get("queueSize");
+        String url = (String)m1.get("url");
+
+//        HttpExecutor e = new HttpExecutor(corePoolSize, maxPoolSize, idleTimeSeconds, poolQueueSize, url);
+        int socketTimeoutSeconds = (Integer)m1.get("socketTimeoutSeconds");
+        int timeToLiveSeconds = (Integer)m1.get("timeToLiveSeconds");
+
+        RejectedExecutionHandlerImpl rejectionHandler = new RejectedExecutionHandlerImpl();
+        //Get the ThreadFactory implementation to use
+        ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        //creating the ThreadPoolExecutor
+        executorPool = new ThreadPoolExecutor(corePoolSize, maxPoolSize, idleTimeSeconds, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(poolQueueSize), threadFactory, rejectionHandler);
+        //start the monitoring thread
+        MyMonitorThread monitor = new MyMonitorThread(executorPool, 3);
+        Thread monitorThread = new Thread(monitor);
+        monitorThread.start();
+        this.url = url;
+
+        initHttp(socketTimeoutSeconds, timeToLiveSeconds, maxPoolSize);
     }
 
-    static {
-        init();
-    }
-    private static void init() {
-        String conf = System.getProperty("SOAPPOOLCONF");
-        Yaml y = new Yaml();
-        Map m = null;
-        try {
-            m = (Map)y.load(new FileInputStream(new File(conf)));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return;
-        }
-        for(Object k: m.keySet()) {
-            String key = (String)k;
-            if(!key.startsWith("pool."))
-                continue;
-            Object o = m.get(key);
-            if(o instanceof Map) {
-                Map m1 = (Map)o;
-                int corePoolSize = (Integer)m1.get("coreSize");
-                int maxPoolSize = (Integer)m1.get("maxSize");
-                int idleTimeSeconds = (Integer)m1.get("idleTimeSeconds");
-                int poolQueueSize = (Integer)m1.get("queueSize");
-                String url = (String)m1.get("url");
-
-                HttpExecutor e = new HttpExecutor(corePoolSize, maxPoolSize, idleTimeSeconds, poolQueueSize, url);
-                int socketTimeoutSeconds = (Integer)m1.get("socketTimeoutSeconds");
-                int timeToLiveSeconds = (Integer)m1.get("timeToLiveSeconds");
-                e.initHttp(socketTimeoutSeconds, timeToLiveSeconds, maxPoolSize);
-
-                executors.put(url, e);
-            }
-        }
+    // 更新配置数据
+    protected void updateConf(Map m1) {
 
     }
-
 
     private HttpClientBuilder builder = null;
     private PoolingHttpClientConnectionManager cm;
@@ -124,21 +120,6 @@ public class HttpExecutor {
     }
     protected String url;
 
-    private HttpExecutor(int corePoolSize, int maxPoolSize, int idleTimeSeconds, int poolQueueSize, String url) {
-
-
-        RejectedExecutionHandlerImpl rejectionHandler = new RejectedExecutionHandlerImpl();
-        //Get the ThreadFactory implementation to use
-        ThreadFactory threadFactory = Executors.defaultThreadFactory();
-        //creating the ThreadPoolExecutor
-        executorPool = new ThreadPoolExecutor(corePoolSize, maxPoolSize, idleTimeSeconds, TimeUnit.SECONDS,
-                new ArrayBlockingQueue<Runnable>(poolQueueSize), threadFactory, rejectionHandler);
-        //start the monitoring thread
-        MyMonitorThread monitor = new MyMonitorThread(executorPool, 3);
-        Thread monitorThread = new Thread(monitor);
-        monitorThread.start();
-        this.url = url;
-    }
 
     public void execute(OrderTask task, ArrayBlockingQueue<OrderTask> reply) {
         executorPool.execute(new WorkerThread(task, reply, this));

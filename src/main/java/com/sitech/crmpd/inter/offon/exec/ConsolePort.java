@@ -26,6 +26,7 @@ public class ConsolePort extends BasePort {
     @Override
     protected boolean connect(Logger log) {
         scanner = new Scanner(System.in);
+        maxExec = 1;
         return true;
     }
 

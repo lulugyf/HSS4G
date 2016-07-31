@@ -35,6 +35,7 @@ public class FilePort extends BasePort {
             e.printStackTrace();
             return false;
         }
+        maxExec = 1;
         return true;
     }
 
