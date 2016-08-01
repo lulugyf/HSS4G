@@ -1,0 +1,20 @@
+header: |
+ <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+ <SOAP-ENV:Header>
+  <m:Authentication xmlns:m="http://www.chinamobile.com/IMS/VoLTEAS/">
+   <m:Username>CDBOSS</m:Username>
+   <m:Password>7C20F57649F7A945E61E4D895455A7E5</m:Password>
+  </m:Authentication>
+  <m:MEName xmlns:m="http://www.chinamobile.com/IMS/VoLTEAS/">MMTelAS_1</m:MEName>
+  <m:MessageID xmlns:m="http://www.chinamobile.com/IMS/VoLTEAS/">1</m:MessageID>
+ </SOAP-ENV:Header>
+ <SOAP-ENV:Body>
+footer: |
+  </SOAP-ENV:Body>
+  </SOAP-ENV:Envelope>
+
+OP0001: |
+  <vol:ADD_SBR xmlns:vol="http://www.chinamobile.com/IMS/VoLTEAS/" xmlns="http://uri.etsi.org/ngn/params/xml/simservs/xcap" xmlns:ex=" http://www.chinamobile.com/IMS/VoLTEAS/extension">
+   <vol:IMPU>tel:+86${phoneNo}</vol:IMPU>
+   <vol:USERTYPE>0</vol:USERTYPE>
+  </vol:ADD_SBR>

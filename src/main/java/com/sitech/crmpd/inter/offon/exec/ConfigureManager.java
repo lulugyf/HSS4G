@@ -34,7 +34,7 @@ public class ConfigureManager {
     private Logger log;
     private String basePath;
 
-    private String portname = null;
+    private String hand_port = null;
     private String cmdFile = null;
 
     private long check_time = 0L;
@@ -64,9 +64,13 @@ public class ConfigureManager {
         if(portname != null)
             log = LoggerUtil.getConsoleLogger();
         this.basePath = basePath;
-        this.portname = portname;
+        this.hand_port = portname;
         this.cmdFile = cmdFile;
-        poolConf = new File(System.getProperty("HTTPPOOLCONF")).getAbsolutePath();
+
+        String pool_cfg = System.getProperty("HTTPPOOLCONF");
+        if(!pool_cfg.startsWith("/"))
+            pool_cfg = basePath + File.separator + pool_cfg;
+        poolConf = new File(pool_cfg).getAbsolutePath();
         loadConf();
     }
 
@@ -111,7 +115,7 @@ public class ConfigureManager {
             }
             if(v instanceof Map) {
                 String portname = (String)k;
-                if(this.portname != null && !portname.equals(this.portname)) // 手工执行， 只 load 指定的hlrport
+                if(this.hand_port != null && !portname.equals(this.hand_port)) // 手工执行， 只 load 指定的hlrport
                     continue;
                 Map conf = (Map)v;
                 if(conf.containsKey("copy_from")){
@@ -122,10 +126,10 @@ public class ConfigureManager {
                     }catch(Exception e){}
                 }
                 BasePort pc;
-                if(portname != null && cmdFile == null) {
-                    pc = new ConsolePort(basePath, portname, conf, this);
-                }else if(portname != null && cmdFile != null) {
-                    pc = new FilePort(basePath, portname, conf, this, cmdFile);
+                if(hand_port != null && cmdFile == null) {
+                    pc = new ConsolePort(basePath, hand_port, conf, this);
+                }else if(hand_port != null && cmdFile != null) {
+                    pc = new FilePort(basePath, hand_port, conf, this, cmdFile);
                 }else {
                     pc = new ManagerPort(basePath, portname, conf, this);
                 }
@@ -195,6 +199,20 @@ public class ConfigureManager {
             return e;
         }
         return null;
+    }
+
+    public void close() {
+        for(HttpExecutor ec: executors.values()){
+            ec.shutdown();
+        }
+    }
+    public String poolStatus() {
+        StringBuilder sb = new StringBuilder();
+        for(String k: executors.keySet()) {
+            sb.append("==== ").append(k).append(" ====\n");
+            sb.append(executors.get(k).status()).append('\n');
+        }
+        return sb.toString();
     }
 
 }

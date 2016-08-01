@@ -1,0 +1,42 @@
+header: |
+  <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:enum="http://www.chinamobile.com/IMS/ENUM">
+   <soapenv:Header>
+      <enum:Authentication>
+         <enum:Username>bss123456</enum:Username>
+         <enum:Password>524737C63C4A1FACD8E65176FC811EB2</enum:Password>
+      </enum:Authentication>
+      <enum:MessageID>1</enum:MessageID>
+      <enum:MEName>CDENS2</enum:MEName>
+   </soapenv:Header>
+  <soapenv:Body>
+
+footer: |
+  </soapenv:Body>
+  </soapenv:Envelope>
+
+#<v:zoneName><% var phead= strutil.subStringTo(phoneNo,0,7); %>${phead}</v:zoneName>
+#<v:Name>${phoneNo}</v:Name>
+
+OP__enum__: enum
+OPe0001: |
+  <enum:addEnumRecord>
+    <enum:zoneName>${phoneHeadDomain}6.8.e164.arpa</enum:zoneName>
+    <enum:name>${phoneNoDomain}6.8.e164.arpa</enum:name>
+    <enum:order>1</enum:order>
+    <enum:preference>1</enum:preference>
+    <enum:flags>U</enum:flags>
+    <enum:service>sip+e2u</enum:service>
+    <enum:regexp>!^.*$!sip:+86${phoneNo}@sc.ims.mnc000.mcc460.3gppnetwork.org!</enum:regexp>
+  </enum:addEnumRecord>
+
+OPe0002: |
+  <enum:deleteEnumRecordByName>
+    <enum:name>${phoneNoDomain}6.8.e164.arpa</enum:name>
+  </enum:deleteEnumRecordByName>
+
+OPe0003: <enum:getAllEnumZones />
+
+OPe0004: |
+  <enum:getEnumRecordsCount>
+    <enum:name>${phoneNoDomain}6.8.e164.arpa</enum:name>
+  </enum:getEnumRecordsCount>

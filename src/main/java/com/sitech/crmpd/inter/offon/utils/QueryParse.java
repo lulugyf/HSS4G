@@ -50,12 +50,14 @@ public class QueryParse {
                 }else{
                     qo.vars.add(new String[]{varname, varvalue});
                 }
-                log.debug("load query order {} = {}", key, value);
+                log.debug("load query order {} = {}", ordercode, s);
             }
         }else{
             log.error("invalid query order config: {} {}", key, value);
         }
+        qorders.put(ordercode, qo);
     }
+    public int size() { return qorders.size() ; }
 
     public String queryOrder(String ordercode) {
         if(qorders.containsKey(ordercode))
@@ -84,6 +86,7 @@ public class QueryParse {
             if (matcher != null && matcher.find())
                 vars.put(vname, matcher.group(1));
             else {
+                vars.put(vname, "");
                 log.warn("query param {} not found", vname);
             }
         }

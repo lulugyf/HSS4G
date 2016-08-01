@@ -16,6 +16,15 @@ import java.lang.management.ManagementFactory;
 public class Main {
 
     public static void main(String[] args) throws Exception{
+        // for local test only
+        String osname = System.getProperty("os.name").toLowerCase();
+        if(osname.indexOf("windows") >= 0) {
+            args = new String[]{"hei.1"};
+            System.setProperty("CONF", "etc/hss.yaml");
+            System.setProperty("HTTPPOOLCONF", "http_pools.cfg");
+            System.setProperty("LOGLEVEL", "DEBUG");
+        }
+
         ConfigureManager cm = null;
         Logger log = null;
         String confFile = System.getProperty("CONF");
@@ -28,19 +37,21 @@ public class Main {
             System.out.printf("port conf file[CONF] %s not found!\n", fpath.getAbsolutePath());
             return;
         }
+        String basePath = fpath.getParent();
 
         String poolcfg = System.getProperty("HTTPPOOLCONF");
         if(poolcfg == null){
             System.out.printf("Please set -DHTTPPOOLCONF=? to pool config file\n");
             return;
         }
+        if(!poolcfg.startsWith("/"))
+            poolcfg = basePath + File.separator + poolcfg;
         File _f = new File(poolcfg);
         if(!_f.exists()){
             System.out.printf("pool conf file[HTTPPOOLCONF] %s not found!\n", _f.getAbsolutePath());
             return;
         }
 
-        String basePath = fpath.getParent();
         if(args.length == 0) {
             cm = new ConfigureManager(fpath.getAbsolutePath(), basePath);
             new Main(cm, basePath).startControl();
@@ -50,12 +61,14 @@ public class Main {
             cm = new ConfigureManager(fpath.getAbsolutePath(), basePath, hlrport, null);
             BasePort port = cm.getPort(hlrport);
             port.for_ever(LoggerUtil.getConsoleLogger());
+            cm.close();
         }else if(args.length == 2) {
             String hlrport = args[0];
             String cmdfile = args[1];
             cm = new ConfigureManager(fpath.getAbsolutePath(), basePath, hlrport, cmdfile);
             BasePort port = cm.getPort(hlrport);
             port.for_ever(LoggerUtil.getConsoleLogger());
+            cm.close();
         }
     }
     private ConfigureManager cm;

@@ -14,7 +14,7 @@ import java.util.Set;
  * Created by guanyf on 7/31/2016.
  * 指令配置处理模块， 包括指令文件的解析保存， 以及指令内容的生成（变量替换）， 一个配置文件一个实例
  *
- * 有两个附带的转换要求：
+ * 有两个附带的转换要求 ( 在 OrderPare 中实现）：
  * 1. apn 名称到 template_id 的转换
  * 2. ip 从 hex -> int 的转换
  */
@@ -64,6 +64,7 @@ public class OrderConfigure {
                 String ordercode = key.substring(2);
                 orders.put(ordercode, value);
             }else if(key.startsWith("QP")){ //查询参数配置
+                log.debug("add qp: {}", key);
                 queryparse.addQP(key, m.get(key));
             }
         }
@@ -71,6 +72,8 @@ public class OrderConfigure {
         this.queryparse = queryparse;
 
         config_mod_time = f.lastModified();
+        log.info("order Config {} loaded, orders={} qorders={}",
+                new Object[]{config_file_path, orders.size(), queryparse.size() });
     }
 
     /**
@@ -115,6 +118,7 @@ public class OrderConfigure {
             ordercode = queryorder;
             task.cmd = cmd.clone();
             task.isQuery = true;
+            //log.info("query order {} for {}", queryorder, cmd.ordercode);
         }else{
             task.isQuery = false;
         }
@@ -141,7 +145,7 @@ public class OrderConfigure {
 
         queryparse.parseQueryResult(task.cmd, query_result, vars);
         String orderbody = orders.get(ordercode);
-        task.request_str = fmt.format(orderbody, vars);
+        task.request_str = fmt.format(header + orderbody + footer, vars);
         task.isQuery = false;
         task.cmd = null;
     }

@@ -1,70 +1,113 @@
-hf1.1:
+hei.1:
   manager.ip: 127.0.0.1
-  manager.port: 22126
-  remote.url: http://10.112.91.41:8080/LTE/LTESOAPEndPoint
-  remote.timeout: 60000
-  http.keep.test: false
-  http.keep.cfg: /offon/gyf/lte/test/http.keep.properties
-  order.path: /offon/bin/dev1/SOAP/hf1/orders.yaml
-  start.tag: <ResultCode>
-  end.tag: </ResultCode>
-  manager.user: hlrhf1
-  manager.password: hlrhf1
+  manager.port: 22109
+  manager.user: hlrhei
+  manager.password: hlrhei
   term.type: 1
-  APN_TPL_ID: ericsson.YA.APN.cfg
-  IPHEX_TO_INT: 3781~4011
-  PROPERTIES: HLRSN=13
+  remote.url: http://10.112.141.121:8080/LTEProxy/LTESOAPEndPoint
+  remote.timeout: 60000
+  order.path: orders/ERI_mianyang.yaml
+  return.desc.pattern: "<ResultDesc>(.+)</ResultDesc>;<faultstring>(.+)</faultstring>"
+  return.code.pattern: "<ResultCode>(.+)</ResultCode>"
+  result.map: orders/resultmap.txt
+  APN_TPL_ID:
+  IPHEX_TO_INT:
+  PROPERTIES: HLRSN=2,USER=boss,PWD=boss
 
-# huawei VOLTE AS 接口测试    测试号：13541380001
-hzx.1:
-  manager.ip: 
-  manager.port: 
-  manager.user: 
-  manager.password: 
-  order_reloadable: true
-  remote.url: http://10.109.230.132:8080/spg
+hei.8:
+  manager.ip: 127.0.0.1
+  manager.port: 22109
+  remote.url: http://10.112.175.212:8080/spg
   remote.timeout: 60000
   http.keep.test: false
-  http.keep.cfg: /offon/gyf/lte/test/http.keep.properties
-  order.path: /offon/gyf/lte/test/orders/hzx.yaml
-  start.tag: <ResultCode>
-  end.tag: </ResultCode>
-  term.type: 1
-  APN_TPL_ID: 
+  http.keep.cfg: /offon2/gyf/test/http.keep.properties
+  order.path: /offon2/gyf/test/orders/tas.yaml
+  start.tag: <m:ResultCode>
+  end.tag: </m:ResultCode>
+  manager.user: hlrhei
+  manager.password: hlrhei
+  term.type: 3
+  APN_TPL_ID:
   IPHEX_TO_INT:
   PROPERTIES:
-  caller.1:  #接口1， 为了兼容原有的配置， 原配置中的接口理解为 caller.0, 每个接口使用各自的指令配置文件
-                 # caller的数字编号必须从1开始，按1累加，否则无效
-    remote.url: http://10.95.233.202:8002
-    remote.timeout: 60000
-    http.keep.test: false
-    order.path: /offon/etc/hss_orders/HUAWEI_cd25.yaml
-  caller.2:
-    remote.url: http://10.95.233.202:8002
-    remote.timeout: 60000
-    http.keep.test: false
-    order.path: /offon/etc/hss_orders/HUAWEI_cd25.yaml
-  group.orders:  #组合指令， 允许在不同的接口上执行,  指令代码后的 0 1 2 为指定的接口编号
-    8001:
-      - 8002 0
-      - 8003 1
-      - 8004 2
 
-# huawei 内江指令手工测试
-hev.1:
-  manager.ip: 
-  manager.port: 
-  manager.user: 
-  manager.password: 
-  order_reloadable: true
-  remote.url: http://10.109.63.140:8002
-  order.path: /offon/bin/dev1/SOAP/hev/orders.yaml
+tas.1:
+  manager.ip:
+  manager.port:
+  manager.user:
+  manager.password:
+  order_reloadable: false
+  _4_remote.url: http://10.109.230.132:8080/spg
+  _5_remote.url: http://10.112.175.212:8080/spg
+  _6_remote.url: http://10.112.175.244:8080/spg
+  remote.url: http://10.112.175.244:8080/spg
+  _remote.url: http://127.0.0.1:9111/spg
   remote.timeout: 60000
   http.keep.test: false
   http.keep.cfg: /offon/gyf/lte/test/http.keep.properties
+  order.path: orders/tas.yaml
+  return.desc.pattern: "<m:ResultDesc>(.+)</m:ResultDesc>;<faultstring>(.+)</faultstring>"
+  return.code.pattern: "<m:ResultCode>(.+)</m:ResultCode>"
+  start.tag: <m:ResultCode>
+  end.tag: </m:ResultCode>
+  term.type: "1"
+  APN_TPL_ID:
+  IPHEX_TO_INT:
+  PROPERTIES:
+  caller.1:
+    remote.url: http://10.109.231.85:8080/spg
+    order.path: orders/enum.yaml
+  group.orders:
+    op01:
+     - t0001 0
+     - e0001 1
+
+hbp.9:
+  manager.ip: 127.0.0.1
+  manager.port: 22029
+  remote.url: http://10.112.141.153:8080/LTEProxy/LTESOAPEndPoint
+  remote.timeout: 60000
+  http.keep.test: faalse
+  http.keep.cfg: /offon/gyf/lte/test/http.keep.properties
+  order.path: orders/ERI_mianyang.yaml
   start.tag: <ResultCode>
   end.tag: </ResultCode>
+  manager.user: hlrhbp
+  manager.password: hlrhbp
+  term.type: 2
+  APN_TPL_ID: huawei.YBNJ.APN.cfg
+  IPHEX_TO_INT:
+  PROPERTIES: HLRSN=2,USER=boss,PWD=boss
+hdf.1:
+  manager.ip: 10.105.2.16
+  manager.port: 22076
+  remote.url: http://10.95.233.202:8002
+  remote.timeout: 60000
+  http.keep.test: false
+  http.keep.cfg: /offon/gyf/lte/test/http.keep.properties
+  order.path: /offon/etc/hss_orders/HUAWEI_cd25.yaml
+  start.tag: <ResultCode>
+  end.tag: </ResultCode>
+  manager.user: hlrhdf
+  manager.password: hlrhdf
   term.type: 1
   APN_TPL_ID: huawei.YBNJ.APN.cfg
   IPHEX_TO_INT:
-  PROPERTIES: HLRSN=1
+  PROPERTIES: HLRSN=25,USER=BOSSSOAP,PWD=bosssoap
+
+hdd.1:
+  manager.ip: 10.105.2.16
+  manager.port: 22074
+  remote.url: http://10.112.20.180:8002
+  remote.timeout: 60000
+  http.keep.test: false
+  http.keep.cfg: /offon/gyf/lte/test/http.keep.properties
+  order.path: orders/HUAWEI_cd27.yaml
+  start.tag: <ResultCode>
+  end.tag: </ResultCode>
+  manager.user: hlrhdd
+  manager.password: hlrhdd
+  term.type: 1
+  APN_TPL_ID: huawei.YBNJ.APN.cfg
+  IPHEX_TO_INT:
+  PROPERTIES: HLRSN=27,USER=BOSSSOAP,PWD=Soap_147

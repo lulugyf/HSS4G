@@ -279,3 +279,16 @@ threadPool:
   poolQueueSize: 50
 
   开启使用线程池的开关在 <hlrcode>.<hlrport> 的配置中， 增加 maxExecutor: <n>
+
+
+查询依赖指令测试用例：
+QP3791:
+ - query_order=9222
+ - cntxid=<Group><CNTXID>(\d+)</CNTXID>.+<QOSTPLID>${ssInfo3}</QOSTPLID>
+OP3791: <hss:MOD_GPRS_CONTEXT><hss:HLRSN>${HLRSN}</hss:HLRSN><hss:ISDN>86${phoneNo}</hss:ISDN><hss:PROV>RMVPDPCNTX</hss:PROV><hss:CNTXID>${cntxid}</hss:CNTXID></hss:MOD_GPRS_CONTEXT>
+
+OP3781: <hss:MOD_GPRS_CONTEXT><hss:HLRSN>${HLRSN}</hss:HLRSN><hss:ISDN>86${phoneNo}</hss:ISDN><hss:PROV>ADDPDPCNTX</hss:PROV><hss:PSAPNQOSTPLID>${ssInfo3}</hss:PSAPNQOSTPLID><hss:IPV4ADDIND>STATIC</hss:IPV4ADDIND><hss:IPV4ADD>${ssInfo2}</hss:IPV4ADD></hss:MOD_GPRS_CONTEXT>
+OP3771: <hss:MOD_GPRS_CONTEXT><hss:HLRSN>${HLRSN}</hss:HLRSN><hss:ISDN>86${phoneNo}</hss:ISDN><hss:PROV>ADDPDPCNTX</hss:PROV><hss:PSAPNQOSTPLID>${ssInfo3}</hss:PSAPNQOSTPLID></hss:MOD_GPRS_CONTEXT>
+
+3771|15700240244|460077296271684|||118
+3791|15700240244|460077296271684|||118

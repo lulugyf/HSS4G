@@ -48,6 +48,7 @@ class JMXControl implements JMXControlMBean {
 				ret = "Worker stopped";
 				port.stop();
 			}
+			ports.remove(portname);
 		}
 		return ret;
 	}
@@ -84,7 +85,7 @@ class JMXControl implements JMXControlMBean {
 			return "Config for "+portname + " not found!";
 		}
 		ports.put(portname, port);
-		Logger log = LoggerUtil.getLogger(basePath, portname, "SOAP");
+		Logger log = LoggerUtil.getLogger(System.getProperty("LOGDIR"), portname, "SOAP");
 		Worker worker = new Worker(port, log);
 		worker.setDaemon(true);
 		worker.start();
@@ -99,6 +100,6 @@ class JMXControl implements JMXControlMBean {
 
 	@Override
 	public String cm() {
-		return null;
+		return cm.poolStatus();
 	}
 }

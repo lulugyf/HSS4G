@@ -117,16 +117,14 @@ public abstract class BasePort {
         String codePattern = String.valueOf(conf.get("return.code.pattern")); //: "<ResultCode>(.+)</ResultCode>"
         String resultMap = String.valueOf(conf.get("result.map")); //: resultmap.txt
         if( !order_path.startsWith("/")){
-            order_path = basePath + File.pathSeparator + order_path;
+            order_path = basePath + File.separator + order_path;
         }
         if(!resultMap.startsWith("/"))
-            resultMap = basePath + File.pathSeparator + resultMap;
+            resultMap = basePath + File.separator + resultMap;
 
         OrderConfigure oc = cm.getOrderConf(order_path);
         String prop_str = "";
         if(conf.containsKey("PROPERTIES")){
-            Splitter.MapSplitter splitter = Splitter.on(',').omitEmptyStrings().trimResults()
-                    .withKeyValueSeparator('=');
             prop_str = (String)conf.get("PROPERTIES");
         }
         HttpExecutor executor = cm.getExecutor(url);
@@ -137,7 +135,7 @@ public abstract class BasePort {
         return new NetworkEntity(name, url, oc, codePattern, descPattern, resultMap, prop_str, executor);
     }
 
-    private void exec(CmdDataAck cmd, OrderTask task, ArrayBlockingQueue<OrderTask> q) {
+    private void exec(CmdDataAck cmd, OrderTask task, ArrayBlockingQueue<OrderTask> q, Logger log) {
         String ordercode = cmd.ordercode;
         if(!orders.containsKey(ordercode)) {
             task.request_str = null;
@@ -147,11 +145,11 @@ public abstract class BasePort {
         orderPrepare.prepare(cmd);
         NetworkEntity ne = orders.get(ordercode);
         task.c = ne;
-        ne.exec(cmd, task, q);
+        ne.exec(cmd, task, q, log);
     }
     // 查询后执行
-    private void exec(OrderTask task, ArrayBlockingQueue<OrderTask> q) {
-        task.c.exec(task, q);
+    private void exec(OrderTask task, ArrayBlockingQueue<OrderTask> q, Logger log) {
+        task.c.exec(task, q, log);
     }
     private void parseReply(OrderTask task, CmdDataReq req) {
         task.c.parseResult(task, req);
@@ -184,14 +182,17 @@ public abstract class BasePort {
             }
             resultCodeMap = new ResultCodeMap(resultcodemap);
 
-            Splitter.MapSplitter splitter = Splitter.on(',').omitEmptyStrings().trimResults()
-                    .withKeyValueSeparator('=');
-            props = splitter.split(prop_str);
+            props = new HashMap<String, String>();
+            if(prop_str != null && prop_str.length() > 0) {
+                Splitter.MapSplitter splitter = Splitter.on(',').omitEmptyStrings().trimResults()
+                        .withKeyValueSeparator('=');
+                props.putAll(splitter.split(prop_str));
+            }
 
             this.executor = executor;
         }
 
-        void exec(CmdDataAck cmd, OrderTask task, ArrayBlockingQueue<OrderTask> q){
+        void exec(CmdDataAck cmd, OrderTask task, ArrayBlockingQueue<OrderTask> q, Logger log){
             ordercfg.genOrder(cmd, task, props);
             if(task.request_str == null){
                 q.offer(task);
@@ -201,7 +202,7 @@ public abstract class BasePort {
         }
 
         // 查询后执行
-        void exec(OrderTask task, ArrayBlockingQueue<OrderTask> q){
+        void exec(OrderTask task, ArrayBlockingQueue<OrderTask> q, Logger log){
             ordercfg.genOrder(task, props);
             if(task.request_str == null){
                 q.offer(task);
@@ -302,7 +303,7 @@ public abstract class BasePort {
                 req.type = CmdDataReq.ONELY_GET;
             }else{
                 if(task.isQuery){
-                    exec(task, replyQ);
+                    exec(task, replyQ, log);
                     continue; //查询后执行指令， 不经过manager
                 }else {
                     curExecutor--;
@@ -345,7 +346,7 @@ public abstract class BasePort {
                 task.logger = log;
             }
             task.fromAck(ack);
-            exec(ack, task, replyQ);
+            exec(ack, task, replyQ, log);
         }
         close(log);
         running = false;

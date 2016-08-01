@@ -11,10 +11,10 @@ import org.slf4j.LoggerFactory;
 
 public class LoggerUtil {
 	public static Logger getLogger(String path, String hlrterm, String prefix){
-				LoggerContext logCtx = (LoggerContext) LoggerFactory.getILoggerFactory();
-				
-				if(logCtx.exists(hlrterm) != null)
-					return logCtx.getLogger(hlrterm);
+        LoggerContext logCtx = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+        if(logCtx.exists(hlrterm) != null)
+            return logCtx.getLogger(hlrterm);
 //				if(logCtx.isStarted()){
 //					logCtx.stop();
 //				}
@@ -30,34 +30,39 @@ public class LoggerUtil {
 //			    logConsoleAppender.setEncoder(logEncoder);
 //			    logConsoleAppender.start();
 
-			    PatternLayoutEncoder logEncoder = new PatternLayoutEncoder();
-			    logEncoder.setContext(logCtx);
-			    logEncoder.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level - %msg%n");
-			    logEncoder.start();
+        PatternLayoutEncoder logEncoder = new PatternLayoutEncoder();
+        logEncoder.setContext(logCtx);
+        logEncoder.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level - %msg%n");
+        logEncoder.start();
 
-			    RollingFileAppender logFileAppender = new RollingFileAppender();
-			    logFileAppender.setContext(logCtx);
-			    logFileAppender.setName("logFile");
-			    logFileAppender.setEncoder(logEncoder);
-			    logFileAppender.setAppend(true);
-			    logFileAppender.setFile(path+"/"+prefix+"."+hlrterm);
+        RollingFileAppender logFileAppender = new RollingFileAppender();
+        logFileAppender.setContext(logCtx);
+        logFileAppender.setName("logFile");
+        logFileAppender.setEncoder(logEncoder);
+        logFileAppender.setAppend(true);
+        logFileAppender.setFile(path+"/"+prefix+"."+hlrterm);
 
-			    TimeBasedRollingPolicy logFilePolicy = new TimeBasedRollingPolicy();
-			    logFilePolicy.setContext(logCtx);
-			    logFilePolicy.setParent(logFileAppender);
-			    logFilePolicy.setFileNamePattern(path+"/"+prefix+".%d{yyyyMMdd}."+hlrterm);
-			    logFilePolicy.setMaxHistory(7);
-			    logFilePolicy.start();
+        TimeBasedRollingPolicy logFilePolicy = new TimeBasedRollingPolicy();
+        logFilePolicy.setContext(logCtx);
+        logFilePolicy.setParent(logFileAppender);
+        logFilePolicy.setFileNamePattern(path+"/"+prefix+".%d{yyyyMMdd}."+hlrterm);
+        logFilePolicy.setMaxHistory(7);
+        logFilePolicy.start();
 
-			    logFileAppender.setRollingPolicy(logFilePolicy);
-			    logFileAppender.start();
+        logFileAppender.setRollingPolicy(logFilePolicy);
+        logFileAppender.start();
 
-			    Logger log = logCtx.getLogger(hlrterm);
-			    log.setAdditive(false);
-			    log.setLevel(Level.INFO);
+        Logger log = logCtx.getLogger(hlrterm);
+        log.setAdditive(false);
+
+        String level = System.getProperty("LOGLEVEL");
+        if("INFO".equals(level) || level == null)
+            log.setLevel(Level.INFO);
+        else if("DEBUG".equals(level))
+            log.setLevel(Level.DEBUG);
 //			    log.addAppender(logConsoleAppender);
-			    log.addAppender(logFileAppender);
-		 return log;
+        log.addAppender(logFileAppender);
+        return log;
 	}
 
 	public static Logger getConsoleLogger() {
@@ -80,8 +85,12 @@ public class LoggerUtil {
 
 		log = logCtx.getLogger("console");
 		log.setAdditive(false);
-		log.setLevel(Level.INFO);
-		log.addAppender(logConsoleAppender);
+        String level = System.getProperty("LOGLEVEL");
+        if("INFO".equals(level) || level == null)
+            log.setLevel(Level.INFO);
+        else if("DEBUG".equals(level))
+            log.setLevel(Level.DEBUG);
+        log.addAppender(logConsoleAppender);
 		return log;
 	}
 
