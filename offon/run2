@@ -1,0 +1,9 @@
+JVM_OPTS="${JVM_OPTS} -DSOAP_PROCESS=1"
+JVM_OPTS="${JVM_OPTS} -Duser.language=Zh -Duser.region=CN"
+JVM_OPTS="${JVM_OPTS} -Ddefault.client.encoding=GBK"
+JVM_OPTS="${JVM_OPTS} -Dfile.encoding=GBK"
+JVM_OPTS="${JVM_OPTS} -DLOGDIR=$LOGDIR"
+JVM_OPTS="${JVM_OPTS} -DCONF=etc/hss.yaml -DHTTPPOOLCONF=http_pools.cfg"
+JVM_OPTS="${JVM_OPTS} -javaagent:./lib/agent.jar=port=6778,host=localhost,agentContext=/j4p"
+
+java -Dhei_TEST ${JVM_OPTS} -cp ./lib:./lib/offon-soap-1.0.1-jar-with-dependencies.jar com.sitech.crmpd.inter.offon.Main &

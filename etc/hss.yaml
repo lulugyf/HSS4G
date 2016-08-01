@@ -4,6 +4,7 @@ hei.1:
   manager.user: hlrhei
   manager.password: hlrhei
   term.type: 1
+  execute.max: 20
   remote.url: http://10.112.141.121:8080/LTEProxy/LTESOAPEndPoint
   remote.timeout: 60000
   order.path: orders/ERI_mianyang.yaml
@@ -17,16 +18,15 @@ hei.1:
 hei.8:
   manager.ip: 127.0.0.1
   manager.port: 22109
-  remote.url: http://10.112.175.212:8080/spg
-  remote.timeout: 60000
-  http.keep.test: false
-  http.keep.cfg: /offon2/gyf/test/http.keep.properties
-  order.path: /offon2/gyf/test/orders/tas.yaml
-  start.tag: <m:ResultCode>
-  end.tag: </m:ResultCode>
   manager.user: hlrhei
   manager.password: hlrhei
   term.type: 3
+  execute.max: 20
+  remote.url: http://10.112.175.212:8080/spg
+  remote.timeout: 60000
+  order.path: orders/tas.yaml
+  return.desc.pattern: "<m:ResultDesc>(.+)</m:ResultDesc>;<faultstring>(.+)</faultstring>"
+  return.code.pattern: "<m:ResultCode>(.+)</m:ResultCode>"
   APN_TPL_ID:
   IPHEX_TO_INT:
   PROPERTIES:
@@ -111,3 +111,35 @@ hdd.1:
   APN_TPL_ID: huawei.YBNJ.APN.cfg
   IPHEX_TO_INT:
   PROPERTIES: HLRSN=27,USER=BOSSSOAP,PWD=Soap_147
+
+hc6.1:
+  manager.ip: 127.0.0.1
+  manager.port: 22053
+  manager.user: hlrhc6
+  manager.password: hlrhc6
+  term.type: 1
+  remote.url: http://10.109.63.148:7777
+  remote.timeout: 60000
+  order.path: orders/nokia_hc6.yaml
+  return.desc.pattern: "<ResultDesc>(.+)</ResultDesc>;<faultstring>(.+)</faultstring>"
+  return.code.pattern: "<ResultCode>(.+)</ResultCode>"
+  result.map: orders/resultmap.txt
+  APN_TPL_ID:
+  IPHEX_TO_INT:
+  PROPERTIES: HLRSN=1,TPLID=704
+
+hd8.1:
+  manager.ip: 127.0.0.1
+  manager.port: 22069
+  manager.user: hlrhd8
+  manager.password: hlrhd8
+  term.type: 1
+  remote.url: http://10.109.63.148:7777
+  remote.timeout: 60000
+  order.path: orders/nokia_hc6.yaml
+  return.desc.pattern: "<ResultDesc>(.+)</ResultDesc>;<faultstring>(.+)</faultstring>"
+  return.code.pattern: "<ResultCode>(.+)</ResultCode>"
+  result.map: orders/resultmap.txt
+  APN_TPL_ID:
+  IPHEX_TO_INT:
+  PROPERTIES: HLRSN=1,TPLID=704

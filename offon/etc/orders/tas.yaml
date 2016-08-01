@@ -1,0 +1,627 @@
+header: |
+ <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+ <SOAP-ENV:Header xmlns:m="http://www.chinamobile.com/IMS/VoLTEAS/">
+  <m:Authentication >
+   <m:Username>CDBOSS</m:Username>
+   <m:Password>7C20F57649F7A945E61E4D895455A7E5</m:Password>
+  </m:Authentication>
+  <m:MEName>CDVOLTETAS5BHW</m:MEName>
+  <m:MessageID>1</m:MessageID>
+ </SOAP-ENV:Header>
+ <SOAP-ENV:Body xmlns:v="http://www.chinamobile.com/IMS/VoLTEAS/">
+
+footer: |
+  </SOAP-ENV:Body>
+  </SOAP-ENV:Envelope>
+
+OPaa01: |
+  <v:LST_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:LST_SBR>
+
+OP2421: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFB>0</v:NSCFB>
+  </v:MOD_SBR>
+OP2431: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFB>1</v:NSCFB>
+  </v:MOD_SBR>
+
+
+OP2441: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSBAIC>0</v:NSBAIC>
+  </v:MOD_SBR>
+
+
+OP2442: |
+  <v:DEA_BAIC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>0</v:BSV>
+  </v:DEA_BAIC>
+
+OP2451: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSBAIC>1</v:NSBAIC>
+  </v:MOD_SBR>
+
+
+OP2452: |
+  <v:ACT_BAIC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>0</v:BSV>
+  </v:ACT_BAIC>
+
+
+OP2461: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNR>0</v:NSCFNR>
+  </v:MOD_SBR>
+
+
+OP2471: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNR>1</v:NSCFNR>
+  </v:MOD_SBR>
+
+
+OP2481: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFU>1</v:NSCFU>
+  </v:MOD_SBR>
+
+
+OP2482: |
+  <v:REG_CFU>
+     <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+     <v:ruleset>
+     <v:rule id="call-forwarding-enhanced-rule1">
+       <v:conditions><v:media>audio</v:media><v:time>00:00,23:59</v:time></v:conditions>
+       <v:actions><v:forward-to><v:target>tel:+86${ssInfo1}</v:target></v:forward-to></v:actions>
+   </v:rule>
+   </v:ruleset>
+  </v:REG_CFU>
+
+
+
+OP2491: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNRC>0</v:NSCFNRC>
+  </v:MOD_SBR>
+
+
+OP2621: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFB>1</v:NSCFB>
+  </v:MOD_SBR>
+
+
+OP2622: |
+  <v:REG_CFB>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>10</v:BSV>
+   <v:DIMPU>tel:+86${ssInfo1}</v:DIMPU>
+  </v:REG_CFB>
+
+
+OP2631: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNRC>1</v:NSCFNRC>
+  </v:MOD_SBR>
+
+
+OP2632: |
+  <v:REG_CFNRC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>10</v:BSV>
+   <v:DIMPU>tel:+86${ssInfo1}</v:DIMPU>
+  </v:REG_CFNRC>
+
+
+OP2641: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNR>1</v:NSCFNR>
+  </v:MOD_SBR>
+
+
+OP2642: |
+  <v:REG_CFNR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>10</v:BSV>
+   <v:DIMPU>tel:+86${ssInfo1}</v:DIMPU>
+  </v:REG_CFNR>
+
+
+OP2651: |
+  <v:RPL_CFU>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_CFU>
+
+
+OP2661: |
+  <v:RPL_CFB>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_CFB>
+
+
+OP2671: |
+  <v:RPL_CFNRC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_CFNRC>
+
+
+OP2681: |
+  <v:RPL_CFNR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_CFNR>
+
+
+OP2692: |
+  <v:RPL_CFB>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_CFB>
+
+
+OP2721: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFB>1</v:NSCFB>
+  </v:MOD_SBR>
+
+
+OP2722: |
+  <v:REG_CFB>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>1</v:BSV>
+   <v:DIMPU>tel:+86${ssInfo1}</v:DIMPU>
+  </v:REG_CFB>
+
+
+OP2731: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNRC>1</v:NSCFNRC>
+  </v:MOD_SBR>
+
+
+OP2732: |
+  <v:REG_CFNRC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>1</v:BSV>
+   <v:DIMPU>tel:+86${ssInfo1}</v:DIMPU>
+  </v:REG_CFNRC>
+
+
+OP2741: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNRC>1</v:NSCFNRC>
+  </v:MOD_SBR>
+
+
+OP2742: |
+  <v:REG_CFNRC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>1</v:BSV>
+   <v:DIMPU>tel:+86${ssInfo1}</v:DIMPU>
+  </v:REG_CFNRC>
+
+
+OP2751: |
+  <v:RPL_CFD>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_CFD>
+
+
+OP2761: |
+  <v:REG_COMSS>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:CW>1</v:CW>
+  </v:REG_COMSS>
+
+
+OP2769: |
+  <v:MOD_SBR>
+    <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+    <v:NSCW>1</v:NSCW>
+  </v:MOD_SBR>
+
+OP2772: |
+  <v:RPL_CFNRC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_CFNRC>
+
+
+OP2781: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNRC>1</v:NSCFNRC>
+  </v:MOD_SBR>
+
+
+OP2782: |
+  <v:REG_CFNRC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>1</v:BSV>
+   <v:DIMPU>tel:+86${ssInfo1}</v:DIMPU>
+  </v:REG_CFNRC>
+
+
+OP2792: |
+  <v:RPL_CFNR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_CFNR>
+
+
+OP2891: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNR>1</v:NSCFNR>
+  </v:MOD_SBR>
+
+
+OP2892: |
+  <v:REG_CFNR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>1</v:BSV>
+   <v:DIMPU>tel:+86${ssInfo1}</v:DIMPU>
+  </v:REG_CFNR>
+
+
+OP2951: |
+  <v:RPL_CFU>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_CFU>
+
+
+OP3081: |
+  <v:SET_OWSBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:US>1</v:US>
+  </v:SET_OWSBR>
+
+
+OP3121: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFU>0</v:NSCFU>
+  </v:MOD_SBR>
+
+
+OP3122: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFB>0</v:NSCFB>
+  </v:MOD_SBR>
+
+
+OP3123: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNR>0</v:NSCFNR>
+  </v:MOD_SBR>
+
+
+OP3124: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNRC>0</v:NSCFNRC>
+  </v:MOD_SBR>
+
+
+OP3131: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFU>1</v:NSCFU>
+  </v:MOD_SBR>
+
+
+OP3132: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFB>1</v:NSCFB>
+  </v:MOD_SBR>
+
+
+OP3133: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNR>1</v:NSCFNR>
+  </v:MOD_SBR>
+
+
+OP3134: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNRC>1</v:NSCFNRC>
+  </v:MOD_SBR>
+
+
+OP3141: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFNRC>1</v:NSCFNRC>
+  </v:MOD_SBR>
+
+
+OP3142: |
+  <v:REG_CFNRC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>1</v:BSV>
+   <v:DIMPU>tel:+86${ssInfo1}</v:DIMPU>
+  </v:REG_CFNRC>
+
+
+OP3151: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSCFU>1</v:NSCFU>
+  </v:MOD_SBR>
+
+
+OP3152: |
+  <v:REG_CFU>
+     <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+     <v:ruleset>
+     <v:rule id="call-forwarding-enhanced-rule1">
+       <v:conditions><v:media>audio</v:media><v:time>00:00,23:59</v:time></v:conditions>
+       <v:actions><v:forward-to><v:target>tel:+86${ssInfo1}</v:target></v:forward-to></v:actions>
+   </v:rule>
+   </v:ruleset>
+  </v:REG_CFU>
+
+
+
+OP3161: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSBOIC>1</v:NSBOIC>
+  </v:MOD_SBR>
+
+
+OP3162: |
+  <v:ACT_BOIC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>0</v:BSV>
+  </v:ACT_BOIC>
+
+
+OP3171: |
+  <v:DEA_BOIC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>0</v:BSV>
+  </v:DEA_BOIC>
+
+
+
+OP3172: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSBOIC>0</v:NSBOIC>
+  </v:MOD_SBR>
+
+
+
+OP3181: |
+  <v:SET_OWSBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:US>3</v:US>
+  </v:SET_OWSBR>
+
+
+OP3191: |
+  <v:SET_OWSBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:US>3</v:US>
+  </v:SET_OWSBR>
+
+
+OP3381: |
+  <v:ADD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:USERTYPE>0</v:USERTYPE>
+  </v:ADD_SBR>
+
+
+OP3391: |
+  <v:RMV_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RMV_SBR>
+
+
+OP3521: |
+  <v:SET_OWSBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:US>0</v:US>
+  </v:SET_OWSBR>
+
+
+OP3541: |
+  <v:SET_OWSBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:US>0</v:US>
+  </v:SET_OWSBR>
+
+
+OP3561: |
+  <v:SET_OWSBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:US>3</v:US>
+  </v:SET_OWSBR>
+
+
+OP3571: |
+  <v:SET_OWSBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:US>3</v:US>
+  </v:SET_OWSBR>
+
+
+OP3581: |
+  <v:SET_OWSBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:US>3</v:US>
+  </v:SET_OWSBR>
+
+
+OP3591: |
+  <v:SET_OWSBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:US>3</v:US>
+  </v:SET_OWSBR>
+
+
+OP4621: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSHOLD>0</v:NSHOLD>
+  </v:MOD_SBR>
+
+
+OP4631: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSHOLD>1</v:NSHOLD>
+  </v:MOD_SBR>
+
+
+OP4641: |
+  <v:RPL_GOIR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_GOIR>
+
+
+OP4651: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSGOIR>1</v:NSGOIR>
+  </v:MOD_SBR>
+
+
+OP4652: |
+  <v:REG_GOIR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:GMODE>0</v:GMODE>
+  </v:REG_GOIR>
+
+
+OP4661: |
+  <v:RPL_GOIR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+  </v:RPL_GOIR>
+
+
+OP4681: |
+  <v:REG_GOIR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:GMODE>1</v:GMODE>
+  </v:REG_GOIR>
+
+
+OP4871: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSBICROM>1</v:NSBICROM>
+  </v:MOD_SBR>
+
+
+OP4872: |
+  <v:ACT_BICROM>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>0</v:BSV>
+  </v:ACT_BICROM>
+
+
+OP4881: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSBICROM>0</v:NSBICROM>
+  </v:MOD_SBR>
+
+
+OP4882: |
+  <v:DEA_BICROM>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>0</v:BSV>
+  </v:DEA_BICROM>
+
+
+OP4921: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSMPTY>0</v:NSMPTY>
+  </v:MOD_SBR>
+
+
+OP4931: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSMPTY>1</v:NSMPTY>
+  </v:MOD_SBR>
+
+
+OP4941: |
+  <v:RPL_SS>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:CW>0</v:CW>
+  </v:RPL_SS>
+
+
+OP4942: |
+  <v:MOD_SBR>
+    <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+    <v:NSCW>0</v:NSCW>
+  </v:MOD_SBR>
+
+OP4951: |
+  <v:REG_COMSS>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:CW>1</v:CW>
+  </v:REG_COMSS>
+
+
+OP4961: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSBAOC>0</v:NSBAOC>
+  </v:MOD_SBR>
+
+
+OP4971: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSBAOC>1</v:NSBAOC>
+  </v:MOD_SBR>
+
+
+OP4972: |
+  <v:ACT_BAOC>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:BSV>0</v:BSV>
+  </v:ACT_BAOC>
+
+
+OP4981: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSOIP>0</v:NSOIP>
+  </v:MOD_SBR>
+
+
+OP4991: |
+  <v:MOD_SBR>
+   <v:IMPU>tel:+86${phoneNo}</v:IMPU>
+   <v:NSOIP>1</v:NSOIP>
+  </v:MOD_SBR>

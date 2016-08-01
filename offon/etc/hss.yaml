@@ -1,0 +1,41 @@
+hei.1:
+  manager.ip: 127.0.0.1
+  manager.port: 22109
+  remote.url: http://127.0.0.1:8080/LTEProxy/LTESOAPEndPoint
+  remote.timeout: 60000
+  http.keep.test: false
+  http.keep.cfg: 
+  order.path: orders/ERI_mianyang.yaml
+  __order.path: orders/ERICSSON_yaan.yaml
+  return.desc.pattern: "<ResultDesc>(.+)</ResultDesc>;<faultstring>(.+)</faultstring>"
+  return.code.pattern: "<ResultCode>(.+)</ResultCode>"
+  start.tag: <ResultCode>
+  end.tag: </ResultCode>
+  result.map: orders/resultmap.txt
+  manager.user: hlrhei
+  manager.password: hlrhei
+  term.type: 1
+  APN_TPL_ID:
+  IPHEX_TO_INT:
+  PROPERTIES: HLRSN=2,USER=boss,PWD=boss
+hei.2: hei.1
+hei.3: hei.1
+
+hei.8:
+  manager.ip: 127.0.0.1
+  manager.port: 22109
+  remote.url: http://127.0.0.1:8081/spg
+  remote.timeout: 60000
+  http.keep.test: false
+  http.keep.cfg: /offon/gyf/lte/test/http.keep.properties
+  order.path: orders/tas.yaml
+  start.tag: <m:ResultCode>
+  end.tag: </m:ResultCode>
+  manager.user: hlrhei
+  manager.password: hlrhei
+  term.type: 3
+  APN_TPL_ID:
+  IPHEX_TO_INT:
+  PROPERTIES:
+hei.6: hei.8
+hei.7: hei.8

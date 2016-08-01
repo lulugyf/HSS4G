@@ -1,0 +1,54 @@
+
+>> POST /LTEProxy/LTESOAPEndPoint HTTP/1.1
+SOAPAction: 
+Content-Length: 383
+Content-Type: text/xml; charset=UTF-8
+Host: 127.0.0.1:9111
+Connection: Keep-Alive
+User-Agent: Apache-HttpClient/4.4.1 (Java/1.6.0_31)
+Accept-Encoding: gzip,deflate
+
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:hss="http://www.chinamobile.com/HSS/">
+<soapenv:Header>
+<hss:PassWord>boss</hss:PassWord>
+<hss:UserName>boss</hss:UserName>
+</soapenv:Header>
+<soapenv:Body>
+<hss:MOD_NAM><hss:HLRSN>2</hss:HLRSN><hss:ISDN>8615700240244</hss:ISDN><hss:NAM>BOTH</hss:NAM></hss:MOD_NAM></soapenv:Body>
+</soapenv:Envelope>
+
+<< HTTP/1.1 200 OK
+X-Powered-By: Servlet/3.0 JSP/2.2 (GlassFish Server Open Source Edition 3.1.2 Java/Oracle Corporation/1.7)
+Server: GlassFish Server Open Source Edition 3.1.2
+Content-Type: text/xml
+Content-Length: 314
+Date: Tue, 28 Jun 2016 03:52:44 GMT
+
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Header/><soap:Body><MOD_NAMResponse xmlns="http://www.chinamobile.com/HSS/"><Result><ResultCode>0</ResultCode><ResultDesc>SUCCESS0001:Operation is successful</ResultDesc><ResultData/></Result></MOD_NAMResponse></soap:Body></soap:Envelope>
+>> POST /LTEProxy/LTESOAPEndPoint HTTP/1.1
+SOAPAction: 
+Content-Length: 360
+Content-Type: text/xml; charset=UTF-8
+Host: 127.0.0.1:9111
+Connection: Keep-Alive
+User-Agent: Apache-HttpClient/4.4.1 (Java/1.6.0_31)
+Accept-Encoding: gzip,deflate
+
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:hss="http://www.chinamobile.com/HSS/">
+<soapenv:Header>
+<hss:PassWord>boss</hss:PassWord>
+<hss:UserName>boss</hss:UserName>
+</soapenv:Header>
+<soapenv:Body>
+<hss:LST_SUB><hss:HLRSN>2</hss:HLRSN><hss:ISDN>8615700240244</hss:ISDN></hss:LST_SUB></soapenv:Body>
+</soapenv:Envelope>
+
+<< HTTP/1.1 200 OK
+X-Powered-By: Servlet/3.0 JSP/2.2 (GlassFish Server Open Source Edition 3.1.2 Java/Oracle Corporation/1.7)
+Server: GlassFish Server Open Source Edition 3.1.2
+Content-Type: text/xml
+Content-Length: 3839
+Date: Tue, 28 Jun 2016 03:52:49 GMT
+
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Header/><soap:Body><LST_SUBResponse xmlns="http://www.chinamobile.com/HSS/"><Result><ResultCode>0</ResultCode><ResultDesc>SUCCESS0001:Operation is successful</ResultDesc><ResultData><Group><Group><IMSI>460077296271684</IMSI></Group><Group><ISDN>8615700240244</ISDN></Group><Group><STATE>CONNECTED</STATE></Group><Group><AUTHD>AVAILABLE</AUTHD></Group><Group><NAM>BOTH</NAM><CATEGORY>COMMON</CATEGORY></Group></Group><Group Name="&quot;LOCK&quot;"><IC>FALSE</IC><OC>FALSE</OC><GPRSLOCK>FALSE</GPRSLOCK><EPSLOCK>FALSE</EPSLOCK></Group><Group Name="&quot;Basic Service&quot;"><Group><TS>Telephony (TS11)</TS><TS>Short Message MT_PP (TS21)</TS><TS>Short Message MO_PP (TS22)</TS></Group><Group><BS>General-DataCDS  (BS30)</BS></Group></Group><Group><DEFAULTCALL>TS11</DEFAULTCALL></Group><Group Name="&quot;ODB Data&quot;"><ODBSS>FALSE</ODBSS><ODBOC>NOBOC</ODBOC><ODBIC>NOBIC</ODBIC><ODBPB1>FALSE</ODBPB1><ODBPB2>FALSE</ODBPB2><ODBPB3>FALSE</ODBPB3><ODBPB4>FALSE</ODBPB4><ODBENTE>FALSE</ODBENTE><ODBINFO>FALSE</ODBINFO><ODBROAM>BROHPLMN</ODBROAM><ODBRCF>NOBRCF</ODBRCF><ODBPOS>NOBPOS</ODBPOS></Group><Group Name="&quot;RR Data&quot;"><RSA>0</RSA></Group><Group Name="&quot;SS Data&quot;"><Group><CLIP>PROV</CLIP><CLIPOVERRIDE>FALSE</CLIPOVERRIDE><CLIR>NOTPROV</CLIR><CLIRMODE>PERMANENT</CLIRMODE><COLP>NOTPROV</COLP><COLPOVERRIDE>FALSE</COLPOVERRIDE><COLR>NOTPROV</COLR><HOLD>PROV</HOLD><MPTY>NOTPROV</MPTY><CFU>PROV</CFU><CFUNCS>NOTPROV</CFUNCS><CFB>PROV</CFB><CFBNFS>NOTPROV</CFBNFS><CFBNCS>NOTPROV</CFBNCS><CFNRY>PROV</CFNRY><CFNRYNFS>NOTPROV</CFNRYNFS><CFNRYNCS>NOTPROV</CFNRYNCS><CFNRC>PROV</CFNRC><CFNRCNCS>NOTPROV</CFNRCNCS><CFD>NOTPROV</CFD><CFDNFS>NOTPROV</CFDNFS><CFDNCS>NOTPROV</CFDNCS><VALIDCCF></VALIDCCF><CW>PROV</CW><BAIC>NOTPROV</BAIC><BAOC>NOTPROV</BAOC><BOIC>PROV</BOIC><BOICEXHC>NOTPROV</BOICEXHC><BICROAM>NOTPROV</BICROAM><CBCOU>OPERATOR</CBCOU><plmn-specificSS-C>NOTPROV</plmn-specificSS-C><plmn-specificSS-D>NOTPROV</plmn-specificSS-D><plmn-specificSS-E>NOTPROV</plmn-specificSS-E><Group Name="CAW"><CFDBSG>TS1X</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="CFB"><CFDBSG>TS1X</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="CFU"><CFDBSG>TS1X</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="CFNRC"><CFDBSG>TS1X</CFDBSG><STATUS>N
+<< OTPROV</STATUS></Group><Group Name="CFNRY"><CFDBSG>TS1X</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="BOIC"><CFDBSG>TS1X</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="BOIC"><CFDBSG>ALL</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="CAW"><CFDBSG>BS3X</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="CFB"><CFDBSG>BS3X</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="CFU"><CFDBSG>BS3X</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="CFNRC"><CFDBSG>BS3X</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="CFNRY"><CFDBSG>BS3X</CFDBSG><STATUS>NOTPROV</STATUS></Group><Group Name="BOIC"><CFDBSG>BS3X</CFDBSG><STATUS>NOTPROV</STATUS></Group></Group><Group Name="&quot;Camel Data&quot;"><OCSI>0</OCSI><TCSI>0</TCSI></Group><Group><UTRANNOTALLOWED>FALSE</UTRANNOTALLOWED><GERANNOTALLOWED>FALSE</GERANNOTALLOWED><IHSPAENOTALLOWED>FALSE</IHSPAENOTALLOWED><EUTRANNOTALLOWED>FALSE</EUTRANNOTALLOWED></Group></Group><Group Name="&quot;GPRS Data&quot; "><STYPE>0</STYPE><PSUSERTPLID>0</PSUSERTPLID><CHARGE_GLOBAL>NONE</CHARGE_GLOBAL></Group><Group Name="&quot;EPS Data&quot;"><CHARGE_GLOBAL></CHARGE_GLOBAL><APNOI_GLOBAL></APNOI_GLOBAL><EPSUSERTPLID>1</EPSUSERTPLID><RATFREQSELPRIID>0</RATFREQSELPRIID></Group><Group Name="&quot;CSLocationData&quot;"><vlrAddress>4-8613440503</vlrAddress><mscNumber>4-8613440503</mscNumber></Group><Group Name="&quot;PSLocationData&quot;"><sgsnNumber>UNKNOWN</sgsnNumber></Group></ResultData></Result></LST_SUBResponse></soap:Body></soap:Envelope>

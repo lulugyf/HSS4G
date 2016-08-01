@@ -1,0 +1,650 @@
+/*********************************************************
+ *
+ *  FileName:
+ *      offon_entry.pc
+ *
+ *  Version:
+ *      1.00 2004.11.11
+ *
+ *  tabstop = 4
+ *
+ ********************************************************/
+
+#include "offon.h"
+#include "db_func.h"
+
+EXEC SQL INCLUDE SQLCA;
+EXEC SQL INCLUDE SQLDA;
+
+
+
+#define MAXLINE	300
+#define zero(a) memset(a, 0, sizeof(a))
+#define init(a) memset(a, 0, sizeof(a))
+
+
+char hlrcode[8];
+char bakhlr[8];
+FILE *logfp;
+
+char *procname;
+
+struct comm_data	tcpbuf;
+struct op_data_req	*reqinfo;
+struct op_data_ack	*ackinfo;
+
+struct user_info	userhead,*userptr;
+struct mcfg_info	mcfghead,*mcfgptr;
+
+int					connid;
+int					commport;
+struct sockaddr_in	srvaddr;
+struct
+{
+	char				hlr;
+	int					flag;
+	int					status;
+	struct sockaddr_in	addr;
+} hlraddr[256];
+
+
+struct
+{
+	char rectype[20];
+	char hlrcode[6];
+	char db1[10];
+	time_t rec_time;
+	int rows;
+	int tm4sel;
+	int tm4fch;
+	int tm4req;
+	int tm4upd;
+	int tm4ins;
+	int tm4dul;
+} yy_time;
+
+#define		VERSION		"2.2.0"
+
+extern int GenDaemon();
+extern int testdir();
+extern int db_login();
+extern char *rlspace(char *);
+
+void usage(char *s)
+{
+	printf("%s\n\nUsage:%s -Hhlrcode [-Dhlrcode] [-Udbuser -Pdbpswd -Sdbname] [-Llogdir] [-v]\n\n\n",s,procname);
+	exit(1);
+}
+
+void LogOut(int sig)
+{
+	printf("LogOut signal==%d\n",sig);
+	if(logfp)
+	{
+		fprintf(logfp,"LogOut signal==%d\n",sig);
+		fclose(logfp);
+	}
+
+	exit(1);
+}
+
+int send_req(int id,int encrypt,int finished,int srvtype,int transid,int length)
+{
+	char chlen[16];
+
+	length+=32;
+	memcpy(tcpbuf.flag,MSGFLAG,4);
+	sprintf(chlen,"%04d",length);
+	memcpy(tcpbuf.msglen,chlen,4);
+	sprintf(tcpbuf.srvtype,"%08d",srvtype);
+	sprintf(tcpbuf.transid,"%08d",transid);
+	tcpbuf.finished=finished;
+	tcpbuf.msgtype=REQ_TYPE;
+	tcpbuf.encrypt=encrypt;
+	/*memcpy(tcpbuf.reserve,"     ",5); */
+
+printf("SND:%s[%d]\n",(char *)&tcpbuf,length);
+	return writenet(id,(char *)&tcpbuf,length);
+}
+
+struct cmd11
+{
+    long	command_id;
+    char	hlr_code[8];
+    char	phone_no[20];
+    char	command_code[8];
+    char	op_code[8];
+    char	imsi_no[32];
+    char	new_phone[20];
+    char	new_imsi[32];
+    char	otherinfo[160];
+    char	business_status[8];
+    char	request_time[15];
+    char    login_no[7];
+    char    group_id[11];
+};
+
+void yy_time_log(time_t t)
+{
+	if(t-yy_time.rec_time >= 300){
+		file_log("perf",
+				"rectime=%ld,rectype=etr,hlrcode=%s,db1=%s,rows=%d,tm4sel=%d,"
+				"tm4fch=%d,tm4req=%d,tm4upd=%d,tm4ins=%d,tm4dul=%d",
+				t, yy_time.hlrcode, yy_time.db1, yy_time.rows, yy_time.tm4sel/1000,
+				yy_time.tm4fch/1000, yy_time.tm4req/1000, yy_time.tm4upd/1000, yy_time.tm4ins/1000, yy_time.tm4dul/1000);
+		yy_time.rows = 0;
+		yy_time.tm4sel = 0;
+		yy_time.tm4fch = 0;
+		yy_time.tm4req = 0;
+		yy_time.tm4upd = 0;
+		yy_time.tm4ins = 0;
+		yy_time.tm4dul = 0;
+		yy_time.rec_time = t;
+	}
+}
+
+FILE * open_logfp(time_t t, FILE *fp1, char *hlrcode)
+{
+	struct tm *tv;
+	char fname[128];
+
+	static int curt = 0;
+
+	tv=localtime(&t);
+	if(tv->tm_mday != curt)
+	{
+		sprintf(fname,"%s/etr%04d%02d%02d.%s",
+				getenv("LOGDIR"), tv->tm_year+1900, tv->tm_mon+1,
+				tv->tm_mday, hlrcode);
+		if(fp1 != NULL)
+			fclose(fp1);
+		fp1 = fopen(fname,"a");
+		if(fp1 == NULL)
+		{
+			printf("can't open %s for LOG[%d]\n", fname, errno);
+			exit(1);
+		}
+		curt = tv->tm_mday;
+	}
+	return fp1;
+}
+
+int main(int argc,char **argv)
+{
+	EXEC SQL BEGIN DECLARE SECTION;
+		char	selsql[1024];
+		char	updsql[1024];
+		char	inssql[1024];
+
+		char	retn[8];
+		int		rec_count;
+		int		total_count;
+	EXEC SQL END DECLARE SECTION;
+
+	int ret,count,endflag;
+	char inputstr[2048];
+	int num,i,status,today;
+	char srvip[32];
+	int srvport;
+	FILE *cfgfp;
+	char cfgstr[256];
+	char dbuser[32],dbpswd[32],dbname[32],bossdb[32],tname[64];
+	char logfilename[256],logdir[256];
+	time_t t;
+	struct tm *tv;
+    int x, y;
+
+	char chhlr;
+	int msglen,readlen,headlen,tcplen,bodylen;
+	int transid;
+	struct timeval t1, t2;
+	int SNDLINE = 40;
+	long cmdids[40];
+
+	procname=argv[0];
+	logfp=NULL;
+
+	memset(inputstr,0x0,sizeof(inputstr));
+	for(i=0;i<argc;i++)
+	{
+		strcat(inputstr,argv[i]);
+		strcat(inputstr," ");
+	}
+
+	if(argc<2)
+		usage("Incorrect Parameter!");
+
+	if(GenDaemon()<0)
+	{
+		printf("GenDaemon() failed!\n");
+		exit(1);
+	}
+
+	signal(SIGTERM,LogOut);
+	signal(SIGPIPE,SIG_IGN);
+	signal(SIGCLD,SIG_IGN);
+	signal(SIGINT,SIG_IGN);
+
+	memset(hlrcode,0x0,sizeof(hlrcode));
+	memset(bakhlr,0x0,sizeof(bakhlr));
+	memset(dbuser,0x0,sizeof(dbuser));
+	memset(dbpswd,0x0,sizeof(dbpswd));
+	memset(dbname,0x0,sizeof(dbname));
+	memset(bossdb,0x0,sizeof(bossdb));
+	memset(logdir,0x0,sizeof(logdir));
+
+	while(--argc>0)
+	{
+		if(argv[argc][0]!='-')
+			usage("Incorrect Parameter!");
+
+		switch(argv[argc][1])
+		{
+		case 'H':
+			strncpy(hlrcode,argv[argc]+2,4);
+			break;
+		case 'U':
+			strncpy(dbuser,argv[argc]+2,30);
+			break;
+		case 'P':
+			strncpy(dbpswd,argv[argc]+2,30);
+			break;
+		case 'S':
+			strncpy(dbname,argv[argc]+2,30);
+			break;
+		case 'L':
+			strncpy(logdir,argv[argc]+2,240);
+			break;
+		case 'D':
+			strncpy(bakhlr, argv[argc]+2,4);
+			break;
+		case 'N':
+			SNDLINE = atoi(argv[argc]+2);
+			if(SNDLINE > 40 || SNDLINE < 1)
+				SNDLINE = 40;
+			break;
+		case 'V':
+		case 'v':
+			printf("\n\nversion : %s\n\n",VERSION);
+			exit(0);
+		default:
+			usage("Unknow Parameter!");
+			break;
+		}
+	}
+
+printf("hlrcode===%s~\n",hlrcode);
+	if(strlen(hlrcode)!=3)
+		usage("Incorrect parameter [hlrcode]!\n");
+
+	if(strlen(logdir)<1)
+		strcpy(logdir,getenv("LOGDIR"));
+
+	if(testdir(logdir))
+		usage("Incorrect parameter [logdir]!");
+
+	time(&t);
+	tv=localtime(&t);
+	memset(logfilename,0x0,sizeof(logfilename));
+	sprintf(logfilename,"%s/etr%04d%02d%02d.%s",logdir,
+		tv->tm_year+1900,tv->tm_mon+1,tv->tm_mday,hlrcode);
+	logfp = open_logfp(t, NULL, hlrcode);
+
+	memset(&yy_time, 0, sizeof(yy_time));
+	strcpy(yy_time.hlrcode, hlrcode);
+	strcpy(yy_time.rectype, "etr");
+	strcpy(yy_time.db1, "offdb");
+	yy_time.rec_time = time(NULL);
+
+	fprintf(logfp,"INIT %04d/%02d/%02d %02d:%02d:%02d\n",
+		tv->tm_year+1900,tv->tm_mon+1,tv->tm_mday,
+		tv->tm_hour,tv->tm_min,tv->tm_sec);
+	fprintf(logfp,"%s[%d]\n",inputstr,argc);
+	fflush(logfp);
+    today=tv->tm_mday;
+
+	if(strlen(dbuser)<1 || strlen(dbpswd)<1 || strlen(dbname)<1)
+	{
+		memset(cfgstr,0x0,sizeof(cfgstr));
+		strcpy(cfgstr,getenv("ETCDIR"));
+		strcat(cfgstr,DBLOGIN);
+
+		cfgfp=fopen(cfgstr,"r");
+		if(cfgfp==NULL)
+		{
+			fprintf(logfp,"can't open %s for read[%d]\n",cfgstr,errno);
+			fclose(logfp);
+			exit(1);
+		}
+
+		memset(dbuser,0x0,sizeof(dbuser));
+		memset(dbpswd,0x0,sizeof(dbpswd));
+		memset(dbname,0x0,sizeof(dbname));
+		fscanf(cfgfp,"%s%s%s",dbuser,dbpswd,dbname);
+		fclose(cfgfp);
+	}
+
+	if(db_login(dbuser,dbpswd,dbname))
+	{
+		fprintf(logfp,"db_login(%s,%s,%s) failed!\n",dbuser,dbpswd,dbname);
+		fclose(logfp);
+		exit(1);
+	}
+	fprintf(logfp,"db_login(%s) success!\n",dbname);
+	fflush(logfp);
+
+	commport=get_commport(hlrcode,srvip, NULL);
+	if(commport<1024 || commport>65535)
+	{
+		fprintf(logfp,"get_commport(%s) == %d failed[%d]\n",commport,errno);
+		fclose(logfp);
+		exit(1);
+	}
+
+	memset(&srvaddr,0x0,sizeof(srvaddr));
+	srvaddr.sin_family=AF_INET;
+	srvaddr.sin_addr.s_addr=inet_addr(srvip);
+	srvaddr.sin_port=htons(commport);
+
+	if(srvaddr.sin_addr.s_addr==-1)
+	{
+		fprintf(logfp,"Incorrect IPADDR in mcfghead[%s]\n",srvip);
+		fclose(logfp);
+		exit(1);
+	}
+
+	memset(dbuser,0x0,sizeof(dbuser));
+	memset(dbpswd,0x0,sizeof(dbpswd));
+	memset(tname,0x0,sizeof(tname));
+
+	if(get_bossinfo(hlrcode,bossdb,dbuser,dbpswd,tname))
+	{
+		fprintf(logfp,"get_boss_db(%s) failed!\n",hlrcode);
+		fclose(logfp);
+		exit(1);
+	}
+	else
+	{
+		fprintf(logfp,"BOSSDB:%s[%d]	%d		%s		%s[%d]\n",
+			dbuser,strlen(dbuser), strlen(dbpswd),bossdb, tname,strlen(tname));
+		fflush(logfp);
+	}
+printf("tname====%s~\n",tname);
+
+	db_logout();
+
+	if(db_login(dbuser,dbpswd,bossdb))
+	{
+		fprintf(logfp,"db_login(%s) failed!\n",bossdb);
+		fclose(logfp);
+		exit(1);
+	}
+	fprintf(logfp,"db_login(%s) success!\n",bossdb);
+	fflush(logfp);   
+
+	connid=socket(AF_INET,SOCK_STREAM,0);
+	if(connid<0)
+	{
+		fprintf(logfp,"socket() failed[%d]\n",errno);
+		fclose(logfp);
+		exit(1);
+	}
+
+	if(connect(connid,(struct sockaddr *)&srvaddr,sizeof(srvaddr))<0)
+	{
+		fprintf(logfp,"connect(%d) failed[%d]!\n",connid,errno);
+		fclose(logfp);
+		exit(1);
+	}
+
+	memset(selsql,0x0,sizeof(selsql));
+	memset(updsql,0x0,sizeof(updsql));
+	memset(inssql, 0, sizeof(inssql));
+
+	/*** on 20050411 排序中增加op_time选项,以避免流水不规则问题 */
+	sprintf(selsql,"SELECT command_id,hlr_code,phone_no,command_code,op_code,imsi_no,new_phone,new_imsi,"
+        "other_char,business_status,to_char(request_time, 'yyyymmddhh24miss'), login_no,nvl(group_id,'1') "
+        "FROM %s WHERE send_status='0' ORDER BY request_time,command_id",tname);
+	sprintf(updsql,"UPDATE %s SET send_status='1',send_time=sysdate WHERE command_id=:v1",tname);
+	if(bakhlr[0] != '\0'){
+		sprintf(inssql, "insert into sndcmdday%s select COMMAND_ID,HLR_CODE,COMMAND_CODE,COMMAND_ORDER,"
+            "ID_NO, BELONG_CODE, SM_CODE, PHONE_NO, NEW_PHONE, IMSI_NO, NEW_IMSI, OTHER_CHAR, OP_CODE,"
+            "TOTAL_DATE, OP_TIME, LOGIN_NO, ORG_CODE, LOGIN_ACCEPT, REQUEST_TIME, BUSINESS_STATUS, "
+            "SEND_STATUS, SEND_TIME, 'kkkkkkkkkk', ORG_ID from sndcmdday%s "
+            "where command_id=:cmdid and (group_id<>'kkkkkkkkkk' or group_id is null)",
+                bakhlr, hlrcode);
+	}
+
+	SQLCODE=SQL_OK;
+	for(;;)
+	{
+        struct cmd11 c1[MAXLINE], *c;
+        int rec_idx;
+
+        gettimeofday(&t1, NULL);
+
+		EXEC SQL PREPARE sel_sql FROM :selsql;
+		EXEC SQL DECLARE cur_sel CURSOR FOR sel_sql;
+
+        EXEC SQL PREPARE ins_sql from :inssql;
+        EXEC SQL PREPARE upd_sql FROM :updsql;
+
+		rec_count=0;
+        endflag = 0;
+        count = 0;
+		EXEC SQL OPEN cur_sel;
+        if(SQLCODE != SQL_OK){
+            fprintf(logfp, "select failed %d, %s\n", SQLCODE, SQLERRMSG);
+            fclose(logfp);
+            exit(1);
+        }
+		gettimeofday(&t2, NULL);
+		yy_time.tm4sel += time_diff1(t1, t2);
+		fprintf(logfp, "tm4sel:%d SQLCODE:%d\n", time_diff1(t1, t2), SQLCODE);
+		fflush(logfp);
+		while(SQLCODE == SQL_OK)
+		{
+			gettimeofday(&t1, NULL);
+            memset(&c1, 0, sizeof(c1));
+            EXEC SQL FETCH cur_sel INTO :c1;
+            if(SQLCODE == 1403){
+                endflag = 1;
+            }else if(SQLCODE != 0){
+                fprintf(logfp, "fetch failed %d %s", SQLCODE, SQLERRMSG);
+                fflush(logfp);
+                break;
+            }
+            rec_count = SQLROWS - count;
+            fprintf(logfp, "rec_count:%d\n", rec_count); fflush(logfp);
+            count = SQLROWS;
+            gettimeofday(&t2, NULL);
+            yy_time.tm4fch += time_diff1(t1, t2);
+            yy_time.rows += rec_count;
+            for(rec_idx=0; rec_idx<rec_count; rec_idx++)
+            {
+                /*批量向manager送指令, 一次最多 SNDLINE行*/
+                y = SNDLINE;
+                if(rec_count - rec_idx < SNDLINE)
+                	y = rec_count - rec_idx;
+
+                if(y > 99) y = 99;
+				sprintf(tcpbuf.reserve, "VV%02d", y); tcpbuf.reserve[4] = ' ';
+                for(x=0; x<y; x++)
+                {
+					c = &c1[rec_idx+x];
+					cmdids[x] = c->command_id;
+					rlspace(c->group_id);
+					reqinfo=(struct op_data_req *)tcpbuf.data;
+					reqinfo += x;
+					sprintf(reqinfo->command_id,"%ld",c->command_id);
+					strcpy(reqinfo->phone_no,rlspace(c->phone_no));
+					strcpy(reqinfo->imsi_no,rlspace(c->imsi_no));
+					strcpy(reqinfo->op_code,rlspace(c->op_code));
+					strcpy(reqinfo->command_code,rlspace(c->command_code));
+					if(atoi(c->command_code)>=60)
+						reqinfo->cmd_status='0';
+					else
+						reqinfo->cmd_status=c->business_status[0];
+					reqinfo->phone_priority='1';
+					strcpy(reqinfo->ss_info1,rlspace(c->new_phone));
+					strcpy(reqinfo->ss_info2,rlspace(c->new_imsi));
+					strcpy(reqinfo->ss_info3,rlspace(c->otherinfo));
+					strcpy(reqinfo->req_time,rlspace(c->request_time));
+					strcpy(reqinfo->login_no,rlspace(c->login_no));
+
+                }
+                gettimeofday(&t1, NULL);
+                if(bakhlr[0] != 0)
+                {
+					EXEC SQL for :y EXECUTE ins_sql USING :cmdids;
+					if(SQLCODE != SQL_OK){
+						fprintf(logfp, "insert fail %d [%s]\n", SQLCODE, SQLERRMSG);
+						fclose(logfp);
+						EXEC SQL ROLLBACK WORK RELEASE;
+						exit(1);
+					}
+                }
+				gettimeofday(&t2, NULL);
+				yy_time.tm4ins += time_diff1(t1, t2);
+				EXEC SQL for :y EXECUTE upd_sql USING :cmdids;
+				if(SQLCODE != SQL_OK)
+				{
+					fprintf(logfp,"update failed[%s][%ld][%d:%s][%ld]\n",
+						updsql, cmdids[0], SQLCODE, SQLERRMSG, time(NULL));
+					fclose(logfp);
+					EXEC SQL ROLLBACK WORK RELEASE;
+					exit(1);
+				}
+				gettimeofday(&t1, NULL);
+				yy_time.tm4upd += time_diff1(t2, t1);
+
+                if(send_req(connid, DECRYPT, TX_END, SRVCODE0001, 1, sizeof(struct op_data_req)*y)<0)
+                {
+                    fprintf(logfp,"send_req(%d) failed!\n",connid);
+                    fclose(logfp);
+                    exit(1);
+                }
+
+                readlen = readnet(connid,(char *)&tcpbuf,8);
+                if(readlen!=8)
+                {
+                    fprintf(logfp,"readnet(%d,0,8)=%d failed\n",connid,readlen);
+                    fclose(logfp);
+                    exit(1);
+                }
+
+                if(strncmp(tcpbuf.flag,MSGFLAG,4))
+                {
+                    tcpbuf.msglen[0]=0;
+                    fprintf(logfp,"MSGFLAG is incorrect [%s]!\n",tcpbuf.flag);
+                    fclose(logfp);
+                    exit(1);
+                }
+
+                msglen=get_length(tcpbuf.msglen, 4);
+                if(msglen<32)
+                {
+                    fprintf(logfp,"MSGLEN is incorrect[%04d]\n",msglen);
+                    fclose(logfp);
+                    exit(1);
+                }
+
+                readlen=readnet(connid,(char *)&tcpbuf+8,msglen-8);
+                if(readlen!=msglen-8)
+                {
+                    fprintf(logfp,"readnet(%d,8,%d)=%d failed!\n",
+                        connid,msglen-8,readlen);
+                    fclose(logfp);
+                    exit(1);
+                }
+                gettimeofday(&t2, NULL);
+                yy_time.tm4req += time_diff1(t1, t2);
+
+                ackinfo=(struct op_data_ack *)tcpbuf.data;
+                memset(retn,0x0,sizeof(retn));
+                strncpy(retn,ackinfo->retn,4);
+
+                EXEC SQL commit;
+                gettimeofday(&t1, NULL);
+                yy_time.tm4dul += time_diff1(t2, t1);
+                rec_idx += y-1;
+            }
+
+            if(rec_count > 0)
+            {
+            	fprintf(logfp,
+					"rectime=%ld,rectype=etr,hlrcode=%s,db1=%s,rows=%d,tm4sel=%d,"
+					"tm4fch=%d,tm4req=%d,tm4upd=%d,tm4ins=%d,tm4dul=%d\n",
+					t, yy_time.hlrcode, yy_time.db1, yy_time.rows, yy_time.tm4sel/1000,
+					yy_time.tm4fch/1000, yy_time.tm4req/1000, yy_time.tm4upd/1000, yy_time.tm4ins/1000, yy_time.tm4dul/1000);
+            	fflush(logfp);
+            }
+
+    		time(&t);
+    		logfp = open_logfp(t, logfp, hlrcode);
+    		/*记录性能日志, 暂时约定每5分钟记录一次 2008-12-1*/
+    		yy_time_log(t);
+
+            if(endflag == 1)
+                break;
+		}
+
+		EXEC SQL CLOSE cur_sel;
+
+        if(rec_count == 0){
+            fprintf(logfp,"no datas,sleep 1s...[%ld]\n",t);
+            fflush(logfp);
+    		sleep(1);
+
+            if(++count>3)
+            {
+                count=0;
+
+                if(send_req(connid,DECRYPT,TX_END,CONN_KEEP,1,0)<0)
+                {
+                    fprintf(logfp,"send_req(%d) failed!\n",connid);
+                    fclose(logfp);
+                    exit(1);
+                }
+
+                readlen=readnet(connid,(char *)&tcpbuf,8);
+                if(readlen!=8)
+                {
+                    fprintf(logfp,"readnet(%d,0,8)=%d failed\n",connid,readlen);
+                    fclose(logfp);
+                    exit(1);
+                }
+
+                if(strncmp(tcpbuf.flag,MSGFLAG,4))
+                {
+                    tcpbuf.msglen[0]=0;
+                    fprintf(logfp,"MSGFLAG is incorrect [%s]!\n",tcpbuf.flag);
+                    fclose(logfp);
+                    exit(1);
+                }
+
+                msglen=get_length(tcpbuf.msglen,4);
+                if(msglen<32)
+                {
+                    fprintf(logfp,"MSGLEN is incorrect[%04d]\n",msglen);
+                    fclose(logfp);
+                    exit(1);
+                }
+
+                readlen=readnet(connid,(char *)&tcpbuf+8,msglen-8);
+                if(readlen!=msglen-8)
+                {
+                    fprintf(logfp,"readnet(%d,8,%d)=%d failed!\n",
+                        connid,msglen-8,readlen);
+                    fclose(logfp);
+                    exit(1);
+                }
+                printf("RCV:%s[%d]\n",(char *)&tcpbuf,msglen);
+            }
+        }
+	}
+
+	fclose(logfp);
+
+	return 0;
+}
