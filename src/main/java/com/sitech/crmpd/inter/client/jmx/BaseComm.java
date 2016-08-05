@@ -104,7 +104,7 @@ public abstract class BaseComm {
 					Thread.sleep(5000L);
 				} catch (final Exception ex) {}
 				req.type = CmdDataReq.ONELY_GET;
-			} else {
+			} else if(ack.retn == 1 ){
 				logger.info(
 						"order to exec: ordercode[{}]stream_id[{}]phone[{}]imsi[{}]info1[{}]info2[{}]info3[{}]",
 						new Object[] { ack.ordercode, ack.stream_id, ack.phone_no, ack.imsi_no,
@@ -127,6 +127,9 @@ public abstract class BaseComm {
 				t2 = System.currentTimeMillis();
 				logger.info("order_time:{} tm:{}(ms) retn:{} desc:{}", new Object[] { ack.ordercode,
 						t2 - t1, req.retn, req.info});
+			}else {
+				logger.error("=======!!! manager comm failed:{}, break", ack.retn);
+                break;
 			}
 		}
 		close();

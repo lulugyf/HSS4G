@@ -43,28 +43,30 @@ char *get_cur_timestr(char *buf, int flag)
 }
 
 char *get_data_file(char *filename, char *hlr, char *date){
+	const char *databuf = getenv("DATABUF");
 	if(date == NULL || date[0] == 0){
 		char dd[9];
 		get_cur_timestr(dd, 1);
-		sprintf(filename, "%s/databuf/%s.%s", getenv("HOME"), hlr, dd);
+		sprintf(filename, "%s/%s.%s", databuf, hlr, dd);
 		if(date != NULL)
 			strcpy(date, dd);
 		return filename;
 	}
-	sprintf(filename, "%s/databuf/%s.%s", getenv("HOME"), hlr, date);
+	sprintf(filename, "%s/%s.%s", databuf, hlr, date);
 	return filename;
 }
 
 char *get_data_file_dul(char *filename, char *hlr, char *date){
+	const char *databuf = getenv("DATABUF");
 	if(date == NULL || date[0] == 0){
 		char dd[9];
 		get_cur_timestr(dd, 1);
-		sprintf(filename, "%s/databuf/syn_%s.%s", getenv("HOME"), hlr, dd);
+		sprintf(filename, "%s/syn_%s.%s", databuf, hlr, dd);
 		if(date != NULL)
 			strcpy(date, dd);
 		return filename;
 	}
-	sprintf(filename, "%s/databuf/syn_%s.%s", getenv("HOME"), hlr, date);
+	sprintf(filename, "%s/syn_%s.%s", databuf, hlr, date);
 	return filename;
 }
 
@@ -74,8 +76,9 @@ int get_file_pos(char *hlr_code, char *date, long *rpos)
 	FILE *fp;
 	char fname[128];
 
-	sprintf(fname, "%s/databuf/.%s.pos1",
-			getenv("HOME"), hlr_code);
+	const char *databuf = getenv("DATABUF");
+	sprintf(fname, "%s/.%s.pos1",
+			databuf, hlr_code);
 	fp = fopen(fname, "r");
 	if(fp == NULL){
 		get_cur_timestr(date, 1);
@@ -101,6 +104,7 @@ int check_indb(){
 		return 0;
 	if(get_file_pos(globle_hlrcode, date, &rpos) != 0)
 		return -1;
+	printf("== check_indb: %s %s size:%ld pos:%ld\n", date, date1, st.st_size, rpos);
 	if(strcmp(date, date1) != 0 || st.st_size > rpos)
 		return -1;
 	else

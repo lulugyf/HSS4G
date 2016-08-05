@@ -317,6 +317,12 @@ public abstract class BasePort {
             }
             // 3. try to get order from manager
             ret = getOrder(req, ack, log);
+            log.debug("getorder == onlyget: {} req.stream_id: {} req.ordercode: {} req.phone_no: {} " +
+                            "reply: {} stream_id: {} order_code: {} phone_no: {}",
+                    new Object[]{
+                    req.type == CmdDataReq.ONELY_GET, req.stream_id, req.ordercode, req.phone_no,
+                            ack.retn, ack.stream_id, ack.ordercode, ack.phone_no
+            });
             if (ret <= 0) {
                 log.error("getOrder failed[{}], break", ret);
                 break;
@@ -331,6 +337,9 @@ public abstract class BasePort {
                 }
                 last_no_order = true;
                 continue;
+            }else if(ack.retn != 1) {
+                log.error("communicate with manager failed: {}", ack.retn);
+                break;
             }
             last_no_order = false;
 

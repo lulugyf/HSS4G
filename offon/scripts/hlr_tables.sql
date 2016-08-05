@@ -1,4 +1,3 @@
-offon1:offon:/offon/bin/gyf>cat tbl.sh
 #!/bin/ksh
 
 # guanyf 20060519

@@ -1,17 +1,21 @@
-drop table cbossuserinfo;
-drop table cqueryparse;
-drop table cqueryrevise;
-drop table corderresend;
-drop table corderreplyparse;
-drop table ccmdtoorder;
-drop table cmaincfginfo;
-drop table sphonecomm;
-drop table shlrcodemap;
-drop table cloginuser;
-drop table cphonehlrcode;
-drop table CORDERREDUCE;
-drop table CUSRDATAMGR;
-drop table COPCODEPRIORITY;
+-- drop table cbossuserinfo;
+-- drop table cqueryparse;
+-- drop table cqueryrevise;
+-- drop table corderresend;
+-- drop table corderreplyparse;
+-- drop table ccmdtoorder;
+-- drop table cmaincfginfo;
+-- drop table sphonecomm;
+-- drop table shlrcodemap;
+-- drop table cloginuser;
+-- drop table cphonehlrcode;
+-- drop table CORDERREDUCE;
+-- drop table CUSRDATAMGR;
+-- drop table COPCODEPRIORITY;
+-- drop table MSISDNINHLR;
+-- drop table CHLRCFGINFO;
+-- drop sequence OFFON_SEQ;
+-- drop table CCOMMANDCODE;
 
 -- Create table
 create table CMAINCFGINFO
@@ -333,13 +337,13 @@ tablespace OFFON
   );
 -- Add comments to the columns 
 comment on column SHLRCODEMAP.dul_dip
-  is '双通道同步数据备用侧ip';
+  is ' 双通道同步数据备用侧ip';
 comment on column SHLRCODEMAP.dul_dport
-  is '双通道同步数据备用侧端口';
+  is ' 双通道同步数据备用侧端口 ';
 comment on column SHLRCODEMAP.dul_rport
-  is '双通道同步数据作为备用侧接收同步数据的端口';
+  is ' 双通道同步数据作为备用侧接收同步数据的端口 ';
 comment on column SHLRCODEMAP.dul_status
-  is '双通道启用状态 1-启用 2-备用 0-无双通道';
+  is ' 双通道启用状态 1-启用 2-备用 0-无双通道 ';
 -- Create/Recreate primary, unique and foreign key constraints 
 alter table SHLRCODEMAP
   add constraint SHLRCODEMAP_PK primary key (HLR_CODE);
@@ -525,6 +529,119 @@ tablespace OFFON
 -- Create/Recreate indexes 
 create unique index COPCODEPRIORITY_IDX1 on COPCODEPRIORITY (OP_CODE)
   tablespace OFFON_IDX
+  pctfree 10
+  initrans 2
+  maxtrans 255
+  storage
+  (
+    initial 1M
+    next 1M
+    minextents 1
+    maxextents unlimited
+    pctincrease 0
+  );
+
+create table MSISDNINHLR
+(
+  msisdn_seg   VARCHAR2(22),
+  hlr_code     VARCHAR2(10),
+  use_flag     VARCHAR2(8),
+  old_hlr_code VARCHAR2(10)
+)
+tablespace OFFON
+  pctfree 10
+  pctused 40
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 1M
+    next 1M
+    minextents 1
+    maxextents unlimited
+    pctincrease 0
+  );
+-- Create/Recreate indexes
+create index IND_MSISDNINHLR on MSISDNINHLR (MSISDN_SEG)
+  tablespace OFFON
+  pctfree 10
+  initrans 2
+  maxtrans 255
+  storage
+  (
+    initial 1M
+    next 1M
+    minextents 1
+    maxextents unlimited
+    pctincrease 0
+  );
+
+  -- Create table
+create table CHLRCFGINFO
+(
+  hlr_code  CHAR(3) not null,
+  hlr_port  CHAR(1) not null,
+  gsm_ip    CHAR(20) not null,
+  gsm_port  NUMBER(5) not null,
+  gsm_user  CHAR(20) not null,
+  gsm_pswd  CHAR(50) not null,
+  order_cfg CHAR(128) not null,
+  reply_cfg CHAR(128) not null,
+  query_cfg CHAR(128) not null,
+  note      CHAR(32)
+)
+tablespace OFFON
+  pctfree 10
+  pctused 40
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 1M
+    next 1M
+    minextents 1
+    maxextents unlimited
+    pctincrease 0
+  );
+-- Grant/Revoke object privileges
+-- grant select on CHLRCFGINFO to AIOXMONITOR;
+-- grant insert, update, delete on CHLRCFGINFO to "WEIHU-ROLE";
+
+-- Create sequence
+create sequence OFFON_SEQ
+minvalue 1
+maxvalue 2147483646
+start with 598000885
+increment by 1
+nocache
+cycle;
+
+-- Create table
+create table CCOMMANDCODE
+(
+  cmd_code CHAR(3) not null,
+  name     VARCHAR2(128) not null,
+  info     VARCHAR2(250),
+  op_time  DATE
+)
+tablespace OFFON
+  pctfree 10
+  pctused 40
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 1M
+    next 1M
+    minextents 1
+    maxextents unlimited
+    pctincrease 0
+  );
+-- Create/Recreate primary, unique and foreign key constraints
+alter table CCOMMANDCODE
+  add primary key (CMD_CODE)
+  using index
+  tablespace OFFON
   pctfree 10
   initrans 2
   maxtrans 255

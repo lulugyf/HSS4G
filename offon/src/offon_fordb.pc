@@ -109,8 +109,8 @@ int sav_file_pos(char *hlr_code, char *date, long rpos){
 	FILE *fp;
 	char fname[128];
 
-	sprintf(fname, "%s/databuf/.%s.pos1",
-			getenv("HOME"), hlr_code);
+	sprintf(fname, "%s/.%s.pos1",
+			getenv("DATABUF"), hlr_code);
 	fp = fopen(fname, "w");
 	if(fp == NULL)
 		return -1;

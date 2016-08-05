@@ -1,5 +1,5 @@
-
-import comm as c
+#encoding=utf-8
+import mgrcomm as c
 
 def main():
     cfg = c.HLRCfg('hei', '1')
@@ -41,6 +41,23 @@ def main():
     cli.close()
 
 '''
+VOLTE 升级：
+===========
+009 	IMS开户
+338 	tas开户
+560 	卸载签约信息
+005 	VOLTE TCSI锚定
+012 	EPS APN绑定
+771 	ENUM域名添加(7701)
+
+VOLTE 降级：
+===========
+772 	ENUM域名删除(7702)
+013 	删除IMS APN
+015 	删除VOLTE TCSI
+339 	tas销户
+008 	IMS销户
+
 100 phone_no
     * (2 hss cmd + 2 tas cmd + 1 hss cmd)
 019 1

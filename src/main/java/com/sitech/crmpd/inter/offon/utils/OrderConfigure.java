@@ -84,6 +84,13 @@ public class OrderConfigure {
         return orders.keySet();
     }
 
+    private String ph2domain(String s){
+        StringBuffer b = new StringBuffer();
+        for(int i=s.length(); i>0; i--)
+            b.append(s.charAt(i-1)).append('.');
+        return b.toString();
+    }
+
     final private void specialDeal(String orderbody, Map<String, String> vars) {
         if (orderbody.indexOf("${strutil.subStringTo(imsi,2,5)}") >= 0) {
             String t = "strutil.subStringTo(imsi,2,5)";
@@ -104,6 +111,13 @@ public class OrderConfigure {
                 vars.put(t, s);
             else
                 vars.put(t, s.substring(2, 5));
+        }
+        // for enum orders
+        if(orderbody.indexOf("${phoneNoDomain}") >= 0){
+            vars.put("phoneNoDomain", ph2domain(vars.get("phoneNo")));
+        }
+        if(orderbody.indexOf("${phoneHeadDomain}") >= 0){
+            vars.put("phoneHeadDomain", ph2domain(vars.get("phoneNo").substring(0, 7)));
         }
     }
     /**

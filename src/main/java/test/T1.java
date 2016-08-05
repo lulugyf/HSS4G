@@ -1,6 +1,8 @@
 package test;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.http.Consts;
 import org.apache.http.StatusLine;
@@ -115,9 +117,30 @@ public class T1 {
 			new V(url, data, String.valueOf(j)).start(); 
 		}
 	}
+
+	private static void test11() {
+		String body = "<SOAP-ENV:Body xmlns:v=\"http://www.chinamobile.com/IMS/VoLTEAS/\">\n" +
+				"<v:SET_OWSBR>\n" +
+				" <v:IMPU>tel:+8615108326837</v:IMPU>\n" +
+				" <v:US>3</v:US>\n" +
+				"</v:SET_OWSBR>\n" +
+				"</SOAP-ENV:Body>\n" +
+				"</SOAP-ENV:Envelope>";
+
+		Pattern p = Pattern.compile("<SOAP-ENV:Body.*>[\\n\\r ]*<[a-zA-Z]*:?([a-zA-Z_]+)>");
+		Matcher m = p.matcher(body);
+		String op = "";
+		if(m != null && m.find()){
+			op = m.group(1);
+		}
+		System.out.println("op="+op);
+
+
+	}
 	
 	public static void main(String[] args) {
-		T1 t = new T1();
-		t.test();
+//		T1 t = new T1();
+//		t.test();
+		test11();
 	}
 }

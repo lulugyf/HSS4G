@@ -23,6 +23,8 @@ public class CmdDataAck extends BasePkt {
 	public String ss_info3; /* 补充信息3 */
 	final private static int len_ss_info3 = 121;
 
+	public String desc;
+
 	private String getString(byte[] buf, int offset, int len) {
 		int pos;
 		for (pos = offset; pos < offset + len; pos++) {
@@ -37,6 +39,14 @@ public class CmdDataAck extends BasePkt {
 		int offset = header_len;
 		retn = ba2int(buf, offset, len_retn);
 		offset += len_retn;
+		if(retn != 1) { //只有返回1 才有指令
+			desc = getString(buf, offset, 60).trim();  //struct general_ack
+			stream_id = null;
+			ordercode = null;
+			phone_no = null;
+			imsi_no = null;
+			return 1;
+		}
 		stream_id = getString(buf, offset, len_stream_id).trim();
 		offset += len_stream_id;
 		ordercode = getString(buf, offset, len_ordercode).trim();
