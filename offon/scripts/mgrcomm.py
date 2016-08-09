@@ -32,7 +32,7 @@ class HLRCfg:
         port = self.port
         import cx_Oracle
         #co = cx_Oracle.connect("offon/ll@xe")
-        co = cx_Oracle.connect("offon/opr_offon292@offondb")
+        co = cx_Oracle.connect("offon/Crmpd!06@onoffdb")
         cur = co.cursor()
         cur.execute("select ip_addr, comm_port from cmaincfginfo where hlr_code=:v1",
                      (hlrcode,))

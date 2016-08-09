@@ -75,7 +75,7 @@ public class FilePort extends BasePort {
             ack.ss_info2 = (String)p[4];
             ack.ss_info3 = (String)p[5];
             ack.stream_id = String.valueOf(lineno++);
-            ack.retn = 2001;
+            ack.retn = 1;
             return 1;
         }
         return 0;
