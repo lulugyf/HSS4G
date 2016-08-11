@@ -31,7 +31,12 @@ class JMXControl implements JMXControlMBean {
 		StringBuffer sb = new StringBuffer();
 		sb.append("=============\n");
 		for(Map.Entry<String, BasePort> e: ports.entrySet()){
-			sb.append(e.getKey()).append(' ').append(e.getValue().isRunning()).append('\n');
+			final BasePort bp = e.getValue();
+			sb.append(e.getKey())
+                    .append(' ').append(bp.isRunning())
+					.append(' ').append(bp.runningOrders())
+					.append(' ').append(bp.getDone())
+					.append('\n');
 		}
 		sb.append("-------------\n");
 		return sb.toString();

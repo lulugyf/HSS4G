@@ -46,17 +46,8 @@ import java.util.regex.Pattern;
  <m:ResultDesc>Operation Succeeded.</m:ResultDesc></m:deleteEnumRecordByNameResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>]
 
  */
-public class ENUMServlet extends HttpServlet{
-    private String readBody(InputStream pin) throws IOException {
-        BufferedReader bf = new BufferedReader(new InputStreamReader(pin));
-        StringBuilder sb = new StringBuilder();
-        while(true) {
-            String line = bf.readLine();
-            if(line == null) break;
-            sb.append(line);
-        }
-        return sb.toString();
-    }
+public class ENUMServlet extends MyBaseServlet{
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String content_type = req.getContentType();
@@ -73,6 +64,8 @@ public class ENUMServlet extends HttpServlet{
         if(op == null){
             throw new ServletException("Invalid request");
         }
+
+        sleep(30L);
 
         String rbody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 " <SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n" +

@@ -110,20 +110,28 @@ select :cmdid, 'xx', :code01, :code2, 1, 1, '3', 'sm', :phone_no, '0', :imsi_no,
     cmdid = int(time.time()) * 1000
     cmds = '009 338 560 005 012 002 010 013 015 339 008'
     cur.execute("select phone_head from cphonehlrcode where hlr_code='scx'")
-    phead = (int(r[0].strip()) for r in cur.fetchmany(20))
+    phead = (int(r[0].strip()) for r in cur.fetchmany(2))
     for p in phead:
         ph = p * 10000
         imsi = 460028816705929
+        rows = []
         for i in range(10000):
             p1 = ph + i
             i1 = imsi + i
-            rows = []
             for cmd in cmds.split():
                 cmdid += 1
                 rows.append([cmdid, cmd[0:2], cmd[2], p1, i1])
+            if len(rows) > 100:
+                cur.executemany(sql, rows)
+                co.commit()
+                print 'commit', len(rows)
+                rows = []
+
+        if len(rows) > 0:
             cur.executemany(sql, rows)
             co.commit()
-            print p1
+            print 'commit', len(rows)
+
     cur.close()
     co.close()
 

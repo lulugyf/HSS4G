@@ -16,7 +16,8 @@ public class OrderTask {
     public String request_str;
     public String response_str;
     public Logger logger;
-    public long t1;
+    public long t1; //从 manager 取得时的时间
+    public long t2; //post消耗的时间， 单位ms
     public boolean isQuery = false; //是否查询指令
     public CmdDataAck cmd; // 对于查询指令， 需要保存原指令
     public BasePort.NetworkEntity c;

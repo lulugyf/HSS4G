@@ -257,6 +257,8 @@ public abstract class BasePort {
 
     private boolean running = false;
     private ReentrantLock lock = new ReentrantLock();
+    private int curExecutor = 0; //当前在执行的指令数量
+    private long done = 0; //已完成的指令数， 累积
     public void for_ever(Logger log) {
 //        Logger log = LoggerUtil.getLogger(basePath, portname, "SOAP");
 
@@ -268,7 +270,6 @@ public abstract class BasePort {
         log.info("manager port connected.");
 
         ArrayBlockingQueue<OrderTask> replyQ = new ArrayBlockingQueue<OrderTask>(maxExec);
-        int curExecutor = 0; //当前在执行的指令数量
 
         final CmdDataReq req = new CmdDataReq();
         final CmdDataAck ack = new CmdDataAck();
@@ -310,9 +311,10 @@ public abstract class BasePort {
                     req.type = CmdDataReq.REPLY_GET;
                     task.toReq(req); //要送回应答数据
                     parseReply(task, req);
-                    t2 = System.currentTimeMillis();
+                    done ++;
+                    //t2 = System.currentTimeMillis();
                     log.info("order_time:{} tm:{}(ms) retn:{} desc:{}", new Object[]{task.ordercode,
-                            t2 - task.t1, req.retn, req.info});
+                            task.t2, req.retn, req.info});
                 }
             }
             // 3. try to get order from manager
@@ -371,4 +373,6 @@ public abstract class BasePort {
     }
 
     public boolean isRunning() { return running; }
+    public int runningOrders() { return curExecutor; }
+    public long getDone() { return done; }
 }

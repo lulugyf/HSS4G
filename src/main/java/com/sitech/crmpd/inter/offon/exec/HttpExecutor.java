@@ -60,7 +60,12 @@ public class HttpExecutor {
     private ThreadPoolExecutor executorPool;
 
     final private ContentType TEXT_XML = ContentType.create("text/xml", Consts.UTF_8);
+    private String pool_name;
 
+    protected HttpExecutor(Map m1, String pool_name) {
+        this(m1);
+        this.pool_name = pool_name;
+    }
     protected HttpExecutor(Map m1) {
 
         int corePoolSize = (Integer)m1.get("coreSize");
@@ -68,6 +73,7 @@ public class HttpExecutor {
         int idleTimeSeconds = (Integer)m1.get("idleTimeSeconds");
         int poolQueueSize = (Integer)m1.get("queueSize");
         String url = (String)m1.get("url");
+        pool_name = url;
 
 //        HttpExecutor e = new HttpExecutor(corePoolSize, maxPoolSize, idleTimeSeconds, poolQueueSize, url);
         int socketTimeoutSeconds = (Integer)m1.get("socketTimeoutSeconds");
@@ -90,14 +96,19 @@ public class HttpExecutor {
 
     public String status() {
         ThreadPoolExecutor ec = executorPool;
-        return String.format("[monitor] [%d/%d] Active: %d, Completed: %d, Task: %d, isShutdown: %s, isTerminated: %s",
+        ArrayBlockingQueue<Runnable> q = (ArrayBlockingQueue<Runnable>)ec.getQueue();
+        return String.format("%s [ %d / %d: %d ] Active: %d, Completed: %d, Task: %d, Queue: %d",
+                pool_name,
                 ec.getPoolSize(),
                 ec.getCorePoolSize(),
+                ec.getMaximumPoolSize(),
                 ec.getActiveCount(),
                 ec.getCompletedTaskCount(),
                 ec.getTaskCount(),
+                q.size()
+                /*,
                 ec.isShutdown(),
-                ec.isTerminated());
+                ec.isTerminated()*/);
     }
     public void shutdown() {
         executorPool.shutdown();
@@ -193,7 +204,9 @@ class WorkerThread implements Runnable {
     @Override
     public void run() {
 //        System.out.println(Thread.currentThread().getName()+" Start. Command = "+ task);
+        long t1 = System.currentTimeMillis();
         processCommand();
+        task.t2 = System.currentTimeMillis()-t1;
 //        System.out.println(Thread.currentThread().getName()+" End.");
     }
 

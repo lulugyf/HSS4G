@@ -114,17 +114,8 @@ import java.util.regex.Pattern;
 
 
  */
-public class HSSServlet extends HttpServlet{
-    private String readBody(InputStream pin) throws IOException {
-        BufferedReader bf = new BufferedReader(new InputStreamReader(pin));
-        StringBuilder sb = new StringBuilder();
-        while(true) {
-            String line = bf.readLine();
-            if(line == null) break;
-            sb.append(line);
-        }
-        return sb.toString();
-    }
+public class HSSServlet extends MyBaseServlet{
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String content_type = req.getContentType();
@@ -142,6 +133,8 @@ public class HSSServlet extends HttpServlet{
         if(op == null){
             throw new ServletException("Invalid request");
         }
+
+        sleep(120L);
 
         String rbody = "<?xml version='1.0' ?>" +
                 "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\"" +
