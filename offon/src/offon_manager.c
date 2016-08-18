@@ -114,7 +114,16 @@ struct cmd_data_req		*cmdreqptr;
 struct cmd_data_ack		*cmdackptr;
 
 int pheadnum;
-struct phonehead	pheadinfo[MAXPHEADNUM];
+#ifndef __USE_LINKHASH__
+	struct phonehead	pheadinfo[MAXPHEADNUM];
+#else
+	#include "linkhash.h"
+	struct lh_table *phonecmds;
+	static void _lh_entry_free(struct lh_entry *ent){
+		free(ent->k);
+		free(ent->v);
+	}
+#endif
 int opcodenum;
 struct opcode_pri	opcodeinfo[MAXOPCODENUM],opcodehead,*opcodeptr;
 
@@ -356,6 +365,35 @@ struct cmdwait * get_cwaitnode(struct phonewait *pwait)
 	return cwaittail->next;
 }
 
+#ifdef __USE_LINKHASH__
+struct phonewait * get_pwaitnode(char *phone1,int ph,int pt,int type)
+{
+	char phone[16];
+	struct phonewait *pw;
+	struct lh_entry *e;
+	if(phone1 == NULL)
+		sprintf(phone, "%d%04d", ph, pt);
+	else
+		strcpy(phone, phone1);
+	e = lh_table_lookup_entry(phonecmds, phone);
+	if(e == NULL){
+		if(type == 1)
+			return NULL;
+		pw=(struct phonewait *)malloc(sizeof(struct phonewait));
+		memset(pw, 0, sizeof(struct phonewait));
+		lh_table_insert(phonecmds, strdup(phone), pw);
+		return pw;
+	}else{
+		// 检查如果已经没有指令， 则删除元素
+		pw=(struct phonewait *)e->v;
+		if(pw->cmdhead.next==NULL){
+			lh_table_delete(phonecmds, phone);
+			return NULL;
+		}
+		return pw;
+	}
+}
+#else
 struct phonewait * get_pwaitnode(char *phone,int ph,int pt,int type)
 {
 	int plen,phead,ptail;
@@ -430,6 +468,7 @@ struct phonewait * get_pwaitnode(char *phone,int ph,int pt,int type)
 
 	return NULL;
 }
+#endif
 
 int get_priority(char *code)
 {
@@ -1081,6 +1120,9 @@ int init_cfg()
 		mgrptr=mgrptr->next;
 	}
 
+#ifdef __USE_LINKHASH__
+	phonecmds = lh_kchar_table_new(4096, NULL, _lh_entry_free);
+#else
 	/* INIT PHONE TO HLR */
 	memset(&phlrhead,0x0,sizeof(phlrhead));
 	if(get_pheadhlr(hlrcode,&phlrhead))
@@ -1109,8 +1151,10 @@ int init_cfg()
 		}
 		free(phlrptr);
 	}
+	fprintf(logfp, "load phone head %d\n", pheadnum);
 	fflush(logfp);
-
+#endif
+	
 	/* INIT OP_CODE TO PRIORITY */
 	memset(&opcodehead,0x0,sizeof(opcodehead));
 	if(get_opcodepri(&opcodehead))

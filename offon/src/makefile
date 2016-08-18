@@ -1,10 +1,11 @@
-CFLAGS= -I. -I$(ORACLE_HOME)/precomp/public -I$(ORACLE_HOME)/rdbms/public -I../gyf/cutil/include
+CFLAGS= -I. -I$(ORACLE_HOME)/precomp/public -I$(ORACLE_HOME)/rdbms/public
 
 CC=gcc -m64 -g
 
-#LFLAGS=-L$(ORACLE_HOME)/lib -lclntsh -lm  -lpthread -lsocket -lnsl
-LFLAGS=-L$(ORACLE_HOME)/lib -lclntsh -lm  -lpthread
-PROCPLSFLAGS=include=../gyf/cutil/include include=$(ORACLE_HOME)/rdbms/public include=./ sys_include=\(/usr/include,/usr/lib/gcc/x86_64-linux-gnu/4.8/include,/usr/include/x86_64-linux-gnu\)
+LFLAGS=-L$(ORACLE_HOME)/lib -lclntsh -lm  -lpthread -lsocket -lnsl
+#LFLAGS=-L$(ORACLE_HOME)/lib -lclntsh -lm  -lpthread
+#PROCPLSFLAGS=include=$(ORACLE_HOME)/rdbms/public include=./ sys_include=\(/usr/include,/usr/lib/gcc/x86_64-linux-gnu/4.8/include,/usr/include/x86_64-linux-gnu\)
+PROCPLSFLAGS=include=$(ORACLE_HOME)/rdbms/public include=./ sys_include=\(/usr/include,/usr/sfw/include\)
 
 #userid=crm/crm@xe
 #PRECOMP= $(ORACLE_HOME)/bin/proc DYNAMIC=ANSI USERID=$(userid) sqlcheck=SEMANTICS LINE=TRUE define=_PROC_
@@ -18,8 +19,10 @@ GYFLIB=-L../gyf/cutil/lib -lgyftool64
 #all: offon_manager offon_entry q_check fetch_cmd_one offon_hlr
 all: offon_manager offon_entry offon_fordb
 
-offon_manager: offon_manager.o testdir.o db_func.o daemon.o util.o file_func.o util_str.o util_tcp.o
+offon_manager: offon_manager.o testdir.o db_func.o daemon.o util.o file_func.o util_str.o util_tcp.o linkhash.o
 	$(CC) -o $@ $^ $(LFLAGS)
+offon_manager.o: offon_manager.c
+	$(CC) -D__USE_LINKHASH__=1  -c  $(CFLAGS) -o $@ $<
 
 OBJ11=offon_entry.o testdir.o db_func.o daemon.o sigtool.o util.o util_tcp.o util_str.o file_func.o
 offon_entry:$(OBJ11)

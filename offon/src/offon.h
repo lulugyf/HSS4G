@@ -251,7 +251,7 @@ struct phonewait
 	struct cmdwait		cmdhead;			/* 命令队列头节点 */
 };
 
-#define		MAXPHEADNUM	 500
+#define		MAXPHEADNUM	 1024
 
 /* 号段管理队列 */
 struct phonehead
