@@ -130,6 +130,7 @@ public class HttpExecutor {
         cm.setMaxTotal(maxConn);
         cm.setDefaultMaxPerRoute(maxConn);
         cm.setDefaultSocketConfig(config);
+        cm.setValidateAfterInactivity(30000);
 
         builder = HttpClients
                 .custom()
